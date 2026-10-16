@@ -7,3 +7,4 @@ description = "Lumetrope engine: Lottie model, renderer, state machines, ops, VC
 
 [dependencies]
 serde_json = { version = "1", features = ["preserve_order"] }
+tiny-skia = "0.11"
