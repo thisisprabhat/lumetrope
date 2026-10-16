@@ -1,0 +1,7 @@
+target/
+node_modules/
+dist/
+pkg/
+.DS_Store
+*.log
+.vite/
