@@ -1,5 +1,7 @@
 //! Rasteriser entry points (tiny-skia).
 
+pub mod effects;
+pub mod layers;
 pub mod paint;
 pub mod shapes;
 
@@ -16,6 +18,73 @@ use crate::scene;
 pub struct RenderCtx {
     /// Decoded image assets keyed by asset id.
     pub images: HashMap<String, Pixmap>,
+}
+
+impl RenderCtx {
+    /// Decode every embedded (`data:` URI) image asset of `anim`.
+    pub fn from_animation(anim: &Animation) -> Self {
+        let mut ctx = RenderCtx::default();
+        ctx.load_embedded(anim);
+        ctx
+    }
+
+    pub fn load_embedded(&mut self, anim: &Animation) {
+        for a in &anim.assets {
+            if a.layers.is_some() || self.images.contains_key(&a.id) {
+                continue;
+            }
+            if let Some(bytes) = decode_data_uri(&a.p) {
+                self.add_image(&a.id, &bytes);
+            }
+        }
+    }
+
+    /// Register image bytes (PNG or JPEG) for an asset id; returns false if undecodable.
+    pub fn add_image(&mut self, id: &str, bytes: &[u8]) -> bool {
+        match decode_image(bytes) {
+            Some(pm) => {
+                self.images.insert(id.to_string(), pm);
+                true
+            }
+            None => false,
+        }
+    }
+}
+
+pub fn decode_data_uri(p: &str) -> Option<Vec<u8>> {
+    use base64::Engine as _;
+    let rest = p.strip_prefix("data:")?;
+    let (_, data) = rest.split_once(";base64,")?;
+    base64::engine::general_purpose::STANDARD.decode(data.trim()).ok()
+}
+
+pub fn decode_image(bytes: &[u8]) -> Option<Pixmap> {
+    if bytes.starts_with(&[0x89, b'P', b'N', b'G']) {
+        return Pixmap::decode_png(bytes).ok();
+    }
+    if bytes.starts_with(&[0xFF, 0xD8]) {
+        let mut dec = jpeg_decoder::Decoder::new(bytes);
+        let data = dec.decode().ok()?;
+        let info = dec.info()?;
+        let (w, h) = (info.width as u32, info.height as u32);
+        let mut pm = Pixmap::new(w, h)?;
+        let n = (w * h) as usize;
+        let px = pm.data_mut();
+        for i in 0..n {
+            let (r, g, b) = match info.pixel_format {
+                jpeg_decoder::PixelFormat::RGB24 => (data[i * 3], data[i * 3 + 1], data[i * 3 + 2]),
+                jpeg_decoder::PixelFormat::L8 => (data[i], data[i], data[i]),
+                jpeg_decoder::PixelFormat::L16 => (data[i * 2], data[i * 2], data[i * 2]),
+                jpeg_decoder::PixelFormat::CMYK32 => {
+                    let (c, m, y, k) = (data[i * 4] as u32, data[i * 4 + 1] as u32, data[i * 4 + 2] as u32, data[i * 4 + 3] as u32);
+                    ((c * k / 255) as u8, (m * k / 255) as u8, (y * k / 255) as u8)
+                }
+            };
+            px[i * 4..i * 4 + 4].copy_from_slice(&[r, g, b, 255]);
+        }
+        return Some(pm);
+    }
+    None
 }
 
 /// Render `anim` at `frame` into a new `w`×`h` pixmap (transparent background),
@@ -37,19 +106,7 @@ pub fn draw_comp(canvas: &mut Pixmap, anim: &Animation, layers: &[Layer], ctx: &
         if l.td != 0 || !scene::is_visible(l, t) {
             continue;
         }
-        draw_layer(canvas, anim, layers, idx, ctx, t, base, depth);
+        layers::draw_layer(canvas, anim, layers, idx, ctx, t, base, depth);
     }
 }
 
-/// Draw one layer's content directly onto `canvas`.
-#[allow(clippy::too_many_arguments)]
-pub fn draw_layer(canvas: &mut Pixmap, anim: &Animation, layers: &[Layer], idx: usize, ctx: &RenderCtx, t: f64, base: &Affine, depth: u32) {
-    let _ = (anim, ctx, depth);
-    let l = &layers[idx];
-    let m = base.mul(&scene::layer_matrix(layers, idx, t));
-    let lt = scene::layer_time(l, t);
-    let alpha = scene::opacity(&l.ks, lt) as f32;
-    if l.ty == 4 {
-        shapes::render_items(canvas, &l.shapes, &m, alpha, lt, &[]);
-    }
-}
