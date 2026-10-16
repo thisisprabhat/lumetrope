@@ -1,0 +1,9 @@
+[package]
+name = "lumetrope-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Lumetrope engine: Lottie model, renderer, state machines, ops, VCS"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
