@@ -1,3 +1,5 @@
 pub mod model;
 pub mod anim;
 pub mod geom;
+pub mod render;
+pub mod scene;
