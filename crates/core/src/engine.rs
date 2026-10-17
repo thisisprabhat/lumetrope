@@ -193,6 +193,28 @@ impl Engine {
         a.to_string()
     }
 
+    /// Topmost root layer id under a composition-space point.
+    pub fn hit_test(&mut self, x: f64, y: f64, frame: f64) -> Option<String> {
+        let anim = self.animation().clone();
+        crate::hit::hit_test(&anim, &self.ctx.fonts, frame, x, y)
+    }
+
+    /// Geometry JSON for a layer id, or null if not found.
+    pub fn layer_geometry(&mut self, id: &str, frame: f64) -> Value {
+        let anim = self.animation().clone();
+        match crate::hit::layer_geometry(&anim, &self.ctx.fonts, id, frame) {
+            Some(g) => json!({
+                "id": g.id, "local": g.local, "bounds": g.bounds, "corners": g.corners,
+                "matrix": g.matrix, "anchor": g.anchor
+            }),
+            None => Value::Null,
+        }
+    }
+
+    pub fn fonts(&self) -> &crate::text::FontRegistry {
+        &self.ctx.fonts
+    }
+
     pub fn add_font(&mut self, name: &str, bytes: Vec<u8>) -> bool {
         self.ctx.fonts.add(name, bytes)
     }

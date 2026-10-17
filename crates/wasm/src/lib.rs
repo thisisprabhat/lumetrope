@@ -83,6 +83,16 @@ impl Engine {
         self.inner.can_redo()
     }
 
+    /// Topmost root layer id at a composition-space point ("" if none).
+    pub fn hit_test(&mut self, x: f64, y: f64, frame: f64) -> String {
+        self.inner.hit_test(x, y, frame).unwrap_or_default()
+    }
+
+    /// Geometry JSON (bounds, corners, matrix, anchor) for a layer id, or "null".
+    pub fn layer_geometry(&mut self, id: &str, frame: f64) -> String {
+        self.inner.layer_geometry(id, frame).to_string()
+    }
+
     pub fn revision(&self) -> f64 {
         self.inner.revision() as f64
     }

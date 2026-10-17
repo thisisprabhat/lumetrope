@@ -8,3 +8,4 @@ pub mod engine;
 pub mod project;
 pub mod dotlottie;
 pub mod ops;
+pub mod hit;

@@ -99,3 +99,14 @@ fn loading_a_file_clears_history() {
     e.load_file("a.json", lottie().to_string().as_bytes()).unwrap();
     assert!(!e.can_undo());
 }
+
+#[test]
+fn engine_hit_test_and_geometry() {
+    let mut e = Engine::new();
+    e.load_file("a.json", lottie().to_string().as_bytes()).unwrap();
+    assert_eq!(e.hit_test(32.0, 16.0, 0.0).as_deref(), Some("root:1"));
+    assert_eq!(e.hit_test(500.0, 500.0, 0.0), None);
+    let g = e.layer_geometry("root:1", 0.0);
+    assert_eq!(g["bounds"], json!([0.0, 0.0, 64.0, 32.0]));
+    assert!(e.layer_geometry("root:99", 0.0).is_null());
+}
