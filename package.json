@@ -1,0 +1,11 @@
+{
+  "name": "lumetrope",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "wasm": "wasm-pack build crates/wasm --target web --release --out-dir ../../apps/web/src/wasm",
+    "dev": "pnpm --filter @lumetrope/web dev",
+    "build": "pnpm wasm && pnpm --filter @lumetrope/web build",
+    "test": "cargo test -p lumetrope-core && pnpm -r test"
+  }
+}
