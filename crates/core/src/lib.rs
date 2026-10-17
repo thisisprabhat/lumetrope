@@ -4,3 +4,6 @@ pub mod geom;
 pub mod render;
 pub mod scene;
 pub mod text;
+pub mod engine;
+pub mod project;
+pub mod dotlottie;
