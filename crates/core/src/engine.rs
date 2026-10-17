@@ -4,6 +4,7 @@
 use serde_json::{json, Value};
 
 use crate::model::{self, Animation};
+use crate::ops::{self, History};
 use crate::project;
 use crate::render::{self, RenderCtx};
 
@@ -13,6 +14,7 @@ pub struct Engine {
     cache: Option<(u64, Animation)>,
     ctx: RenderCtx,
     images_rev: u64,
+    hist: History,
 }
 
 impl Default for Engine {
@@ -29,6 +31,7 @@ impl Engine {
             cache: None,
             ctx: RenderCtx::default(),
             images_rev: 0,
+            hist: History::default(),
         }
     }
 
@@ -54,7 +57,49 @@ impl Engine {
     fn replace_project(&mut self, p: Value) {
         self.project = p;
         self.ctx.images.clear();
+        self.hist.clear();
         self.touch();
+    }
+
+    /// Run a catalogue tool. Returns `{"ok": result}` or `{"error": message}`.
+    pub fn apply(&mut self, tool: &str, args: &Value) -> Value {
+        match ops::apply(&mut self.project, &mut self.hist, tool, args) {
+            Ok(v) => {
+                if ops::catalog::find(tool).map(|t| t.mutates).unwrap_or(false) {
+                    self.touch();
+                }
+                json!({ "ok": v })
+            }
+            Err(e) => json!({ "error": e.0 }),
+        }
+    }
+
+    pub fn catalog(&self) -> Value {
+        ops::catalog::catalog_json()
+    }
+
+    pub fn undo(&mut self) -> bool {
+        let ok = self.hist.undo(&mut self.project).is_some();
+        if ok {
+            self.touch();
+        }
+        ok
+    }
+
+    pub fn redo(&mut self) -> bool {
+        let ok = self.hist.redo(&mut self.project).is_some();
+        if ok {
+            self.touch();
+        }
+        ok
+    }
+
+    pub fn can_undo(&self) -> bool {
+        self.hist.can_undo()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        self.hist.can_redo()
     }
 
     pub fn new_project(&mut self, w: f64, h: f64, fr: f64, frames: f64) {

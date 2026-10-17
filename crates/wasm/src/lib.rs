@@ -54,6 +54,35 @@ impl Engine {
         self.inner.add_font(name, bytes)
     }
 
+    /// Run a catalogue tool with JSON args; returns `{"ok":…}` or `{"error":…}` JSON.
+    pub fn apply(&mut self, tool: &str, args_json: &str) -> String {
+        let args: serde_json::Value = match serde_json::from_str(args_json) {
+            Ok(v) => v,
+            Err(e) => return serde_json::json!({"error": format!("invalid JSON args: {e}")}).to_string(),
+        };
+        self.inner.apply(tool, &args).to_string()
+    }
+
+    pub fn catalog(&self) -> String {
+        self.inner.catalog().to_string()
+    }
+
+    pub fn undo(&mut self) -> bool {
+        self.inner.undo()
+    }
+
+    pub fn redo(&mut self) -> bool {
+        self.inner.redo()
+    }
+
+    pub fn can_undo(&self) -> bool {
+        self.inner.can_undo()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        self.inner.can_redo()
+    }
+
     pub fn revision(&self) -> f64 {
         self.inner.revision() as f64
     }

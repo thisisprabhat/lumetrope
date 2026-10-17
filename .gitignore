@@ -6,3 +6,4 @@ pkg/
 *.log
 .vite/
 .superpowers/
+apps/web/tsconfig.tsbuildinfo

@@ -75,3 +75,27 @@ fn new_project_has_requested_settings() {
     let i = e.info();
     assert_eq!((i["w"].as_f64(), i["h"].as_f64(), i["fr"].as_f64(), i["op"].as_f64()), (Some(800.0), Some(600.0), Some(60.0), Some(120.0)));
 }
+
+#[test]
+fn engine_apply_undo_redo() {
+    let mut e = Engine::new();
+    let r = e.apply("set_scene_settings", &json!({"width": 300}));
+    assert_eq!(r["ok"], json!({"ok": true}));
+    assert_eq!(e.info()["w"], 300.0);
+    assert!(e.can_undo());
+    assert!(e.undo());
+    assert_eq!(e.info()["w"], 512.0);
+    assert!(e.redo());
+    assert_eq!(e.info()["w"], 300.0);
+    let bad = e.apply("nope", &json!({}));
+    assert!(bad["error"].as_str().unwrap().contains("nope"));
+    assert!(e.catalog().as_array().unwrap().len() >= 1);
+}
+
+#[test]
+fn loading_a_file_clears_history() {
+    let mut e = Engine::new();
+    e.apply("set_scene_settings", &json!({"width": 300}));
+    e.load_file("a.json", lottie().to_string().as_bytes()).unwrap();
+    assert!(!e.can_undo());
+}
