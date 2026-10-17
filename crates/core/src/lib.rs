@@ -3,3 +3,4 @@ pub mod anim;
 pub mod geom;
 pub mod render;
 pub mod scene;
+pub mod text;

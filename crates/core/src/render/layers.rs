@@ -185,6 +185,36 @@ fn draw_content(canvas: &mut Pixmap, anim: &Animation, layers: &[Layer], idx: us
             let paint = PixmapPaint { opacity: alpha, ..Default::default() };
             canvas.draw_pixmap(0, 0, pm.as_ref(), &paint, Transform::identity(), None);
         }
+        5 => draw_text(canvas, l, ctx, lt, &m, alpha),
         _ => {}
+    }
+}
+
+fn draw_text(canvas: &mut Pixmap, l: &Layer, ctx: &RenderCtx, t: f64, m: &Affine, alpha: f32) {
+    let Some(td) = &l.text else { return };
+    let Some(doc) = td.docs.iter().rev().find(|(ft, _)| *ft <= t).or(td.docs.first()).map(|(_, d)| d) else { return };
+    let glyphs = crate::text::layout(doc, &ctx.fonts);
+    let mut all = Path::default();
+    for g in glyphs {
+        all.extend(g);
+    }
+    let Some(path) = all.to_skia() else { return };
+    let fill = |canvas: &mut Pixmap| {
+        if let Some(c) = &doc.fill {
+            paint::fill(canvas, &path, &paint::solid_paint(paint::rgb(c), alpha), 1, m);
+        }
+    };
+    let stroke = |canvas: &mut Pixmap| {
+        if let (Some(c), true) = (&doc.stroke, doc.stroke_width > 0.0) {
+            let spec = tiny_skia::Stroke { width: doc.stroke_width as f32, line_join: tiny_skia::LineJoin::Round, ..Default::default() };
+            paint::stroke(canvas, &path, &paint::solid_paint(paint::rgb(c), alpha), &spec, m);
+        }
+    };
+    if doc.stroke_over_fill {
+        fill(canvas);
+        stroke(canvas);
+    } else {
+        stroke(canvas);
+        fill(canvas);
     }
 }

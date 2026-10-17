@@ -18,6 +18,7 @@ use crate::scene;
 pub struct RenderCtx {
     /// Decoded image assets keyed by asset id.
     pub images: HashMap<String, Pixmap>,
+    pub fonts: crate::text::FontRegistry,
 }
 
 impl RenderCtx {
