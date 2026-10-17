@@ -19,6 +19,8 @@ pub struct ToolDef {
 pub fn tools() -> Vec<ToolDef> {
     let mut v = vec![];
     v.extend(super::scene::defs());
+    v.extend(super::layers::defs());
+    v.extend(super::keys::defs());
     v
 }
 
