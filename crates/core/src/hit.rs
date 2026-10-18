@@ -188,12 +188,17 @@ fn contains(anim: &Animation, fonts: &FontRegistry, layers: &[Layer], idx: usize
 
 /// Topmost visible root layer under (`x`, `y`), as a layer id.
 pub fn hit_test(anim: &Animation, fonts: &FontRegistry, t: f64, x: f64, y: f64) -> Option<String> {
+    hit_test_in(anim, fonts, "root", t, x, y)
+}
+
+/// Like [`hit_test`] for an animation whose root layers belong to composition `comp`.
+pub fn hit_test_in(anim: &Animation, fonts: &FontRegistry, comp: &str, t: f64, x: f64, y: f64) -> Option<String> {
     for (idx, l) in anim.layers.iter().enumerate() {
         if l.td != 0 || !scene::is_visible(l, t) || l.ty == 3 {
             continue;
         }
         if contains(anim, fonts, &anim.layers, idx, t, &Affine::IDENTITY, [x, y]) {
-            return Some(layer_id("root", l));
+            return Some(layer_id(comp, l));
         }
     }
     None

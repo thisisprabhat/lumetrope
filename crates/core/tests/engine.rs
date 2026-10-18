@@ -127,3 +127,20 @@ fn batch_groups_many_ops_into_one_undo_step() {
     e.end_batch();
     assert!(!e.can_undo(), "empty batch records nothing");
 }
+
+#[test]
+fn view_scene_renders_and_hit_tests_a_nested_scene() {
+    let mut e = Engine::new();
+    e.new_project(200.0, 100.0, 30.0, 30.0);
+    let r = e.apply("create_scene", &json!({"name": "Card", "width": 50, "height": 50}));
+    let id = r["ok"]["scene"].as_str().unwrap().to_string();
+    e.apply("create_shape", &json!({"type": "rect", "scene": id, "position": [25, 25], "size": [50, 50], "fill": "#00ff00"}));
+    assert_eq!(e.render_rgba(0.0, 200, 100)[(50 * 200 + 100) * 4 + 3], 0, "root has nothing");
+    e.set_view_scene(&id);
+    assert_eq!((e.info()["w"].as_f64(), e.info()["view"].as_str()), (Some(50.0), Some(id.as_str())));
+    let px = e.render_rgba(0.0, 50, 50);
+    assert_eq!(&px[(25 * 50 + 25) * 4..(25 * 50 + 25) * 4 + 4], &[0, 255, 0, 255]);
+    assert_eq!(e.hit_test(25.0, 25.0, 0.0), Some(format!("{id}:1")));
+    e.set_view_scene("missing");
+    assert_eq!(e.info()["view"], "root", "unknown scenes fall back to root");
+}

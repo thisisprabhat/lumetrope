@@ -101,6 +101,16 @@ impl Engine {
         self.inner.layer_geometry(id, frame).to_string()
     }
 
+    /// Show a nested scene on the canvas ("root" for the main scene).
+    pub fn set_view_scene(&mut self, id: &str) {
+        self.inner.set_view_scene(id);
+    }
+
+    /// Names of fonts registered with add_font.
+    pub fn font_names(&self) -> String {
+        serde_json::to_string(&self.inner.fonts().names()).unwrap_or_default()
+    }
+
     pub fn revision(&self) -> f64 {
         self.inner.revision() as f64
     }

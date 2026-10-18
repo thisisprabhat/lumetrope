@@ -15,6 +15,8 @@ pub struct Engine {
     ctx: RenderCtx,
     images_rev: u64,
     hist: History,
+    /// Composition shown on the canvas: "root" or a precomp asset id.
+    view: String,
 }
 
 impl Default for Engine {
@@ -32,6 +34,7 @@ impl Engine {
             ctx: RenderCtx::default(),
             images_rev: 0,
             hist: History::default(),
+            view: "root".into(),
         }
     }
 
@@ -55,6 +58,7 @@ impl Engine {
     }
 
     fn replace_project(&mut self, p: Value) {
+        self.view = "root".into();
         self.project = p;
         self.ctx.images.clear();
         self.hist.clear();
@@ -157,6 +161,30 @@ impl Engine {
         &self.cache.as_ref().unwrap().1
     }
 
+    /// Show a nested scene (precomp) on the canvas instead of the root; unknown ids select root.
+    pub fn set_view_scene(&mut self, id: &str) {
+        let ok = id != "root" && self.animation().asset(id).map(|a| a.layers.is_some()).unwrap_or(false);
+        self.view = if ok { id.to_string() } else { "root".into() };
+    }
+
+    pub fn view_scene(&self) -> &str {
+        &self.view
+    }
+
+    /// The animation as seen through the current view scene.
+    pub fn view_animation(&mut self) -> Animation {
+        let view = self.view.clone();
+        let base = self.animation().clone();
+        if view == "root" {
+            return base;
+        }
+        let Some(asset) = base.asset(&view).cloned() else { return base };
+        let holder = base.layers.iter().find(|l| l.ref_id.as_deref() == Some(view.as_str()));
+        let w = if asset.w > 0.0 { asset.w } else { holder.map(|l| l.w).filter(|w| *w > 0.0).unwrap_or(base.w) };
+        let h = if asset.h > 0.0 { asset.h } else { holder.map(|l| l.h).filter(|h| *h > 0.0).unwrap_or(base.h) };
+        Animation { layers: asset.layers.unwrap_or_default(), w, h, ..base }
+    }
+
     fn sync_images(&mut self) {
         if self.images_rev == self.revision {
             return;
@@ -169,8 +197,10 @@ impl Engine {
     pub fn info(&mut self) -> Value {
         let ids: Vec<String> = self.project["animations"].as_object().map(|o| o.keys().cloned().collect()).unwrap_or_default();
         let active = project::active_id(&self.project);
-        let a = self.animation();
+        let view = self.view.clone();
+        let a = &self.view_animation();
         json!({
+            "view": view,
             "w": a.w, "h": a.h, "fr": a.fr, "ip": a.ip, "op": a.op, "name": a.nm,
             "layers": a.layers.len(), "animations": ids, "active": active,
             "markers": a.markers.iter().map(|m| json!({"name": m.name, "time": m.time, "duration": m.duration})).collect::<Vec<_>>(),
@@ -181,7 +211,7 @@ impl Engine {
     /// Render the active animation to straight-alpha RGBA (as `ImageData` expects).
     pub fn render_rgba(&mut self, frame: f64, w: u32, h: u32) -> Vec<u8> {
         self.sync_images();
-        let anim = self.animation().clone();
+        let anim = self.view_animation();
         let pm = render::render(&anim, &self.ctx, frame, w, h);
         let mut out = pm.take();
         for px in out.chunks_exact_mut(4) {
@@ -204,8 +234,8 @@ impl Engine {
 
     /// Topmost root layer id under a composition-space point.
     pub fn hit_test(&mut self, x: f64, y: f64, frame: f64) -> Option<String> {
-        let anim = self.animation().clone();
-        crate::hit::hit_test(&anim, &self.ctx.fonts, frame, x, y)
+        let anim = self.view_animation();
+        crate::hit::hit_test_in(&anim, &self.ctx.fonts, &self.view, frame, x, y)
     }
 
     /// Geometry JSON for a layer id, or null if not found.

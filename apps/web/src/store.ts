@@ -32,6 +32,8 @@ interface EditorState {
   grid: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  fonts: string[];
+  addFontName: (n: string) => void;
   select: (ids: string[], shape?: string | null) => void;
   setScene: (s: string) => void;
   setLeftTab: (t: LeftTab) => void;
@@ -72,6 +74,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   grid: false,
   canUndo: false,
   canRedo: false,
+  fonts: [],
+  addFontName: (n) => set({ fonts: Array.from(new Set([...get().fonts, n])) }),
   refresh: () => {
     const info = readInfo();
     const e = engine();
