@@ -2,11 +2,13 @@
 //! is a named tool applied through [`apply`], recorded as an undoable [`Tx`]
 //! of JSON-pointer edits on the project root.
 
+pub mod assets;
 pub mod catalog;
 pub mod fx;
 pub mod keys;
 pub mod layers;
 pub mod machines;
+pub mod presets;
 pub mod scene;
 pub mod shapes;
 pub mod text;

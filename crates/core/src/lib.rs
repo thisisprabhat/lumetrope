@@ -9,3 +9,4 @@ pub mod project;
 pub mod dotlottie;
 pub mod ops;
 pub mod hit;
+pub mod svg;
