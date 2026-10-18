@@ -251,15 +251,16 @@ pub fn shape_items(a: &Value, origin: [f64; 2]) -> OpResult<Vec<Value>> {
         }
         other => return err(format!("unknown shape type '{other}' (rect, ellipse, polygon, star, path)")),
     };
+    // Earlier items draw on top: geometry, stroke, then fill (stroke above fill).
     let mut items = vec![geom];
+    if let Some(c) = a.get("stroke").filter(|c| !c.is_null()) {
+        items.push(stroke_item(c, opt_f64(a, "stroke_width").unwrap_or(2.0))?);
+    }
     match a.get("fill") {
         Some(Value::Null) => {}
         Some(c) => items.push(fill_item(c)?),
         None if a.get("stroke").is_some() => {}
         None => items.push(fill_item(&json!("#c4c4c4"))?),
-    }
-    if let Some(c) = a.get("stroke").filter(|c| !c.is_null()) {
-        items.push(stroke_item(c, opt_f64(a, "stroke_width").unwrap_or(2.0))?);
     }
     Ok(items)
 }

@@ -6,6 +6,7 @@ pub mod catalog;
 pub mod keys;
 pub mod layers;
 pub mod scene;
+pub mod shapes;
 pub mod util;
 
 use serde_json::{Map, Value};
