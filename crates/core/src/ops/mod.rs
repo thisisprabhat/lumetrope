@@ -3,10 +3,12 @@
 //! of JSON-pointer edits on the project root.
 
 pub mod catalog;
+pub mod fx;
 pub mod keys;
 pub mod layers;
 pub mod scene;
 pub mod shapes;
+pub mod text;
 pub mod util;
 
 use serde_json::{Map, Value};

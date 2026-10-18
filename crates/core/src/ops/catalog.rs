@@ -22,6 +22,8 @@ pub fn tools() -> Vec<ToolDef> {
     v.extend(super::layers::defs());
     v.extend(super::keys::defs());
     v.extend(super::shapes::defs());
+    v.extend(super::fx::defs());
+    v.extend(super::text::defs());
     v
 }
 
