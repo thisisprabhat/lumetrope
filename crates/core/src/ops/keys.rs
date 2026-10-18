@@ -45,6 +45,13 @@ pub fn defs() -> Vec<ToolDef> {
             handler: set_keyframe_easing,
         },
         ToolDef {
+            name: "set_property",
+            description: "Set any property's value. Static properties are replaced; animated ones get a keyframe at 'frame' (default 0). Use this for shape items, masks ('mask:<i>') and effects ('effect:<i>') as well as transforms.",
+            schema: || obj(with(target(), json!({"value": {}, "frame": {"type": "number"}})), &["layer", "property", "value"]),
+            mutates: true,
+            handler: set_property,
+        },
+        ToolDef {
             name: "get_property",
             description: "Read one property at a frame: evaluated value, whether it is animated, whether a keyframe sits on this frame, and all keyframe frames.",
             schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer", "property"]),
@@ -337,4 +344,11 @@ fn get_property(cx: &mut Cx, a: &Value) -> OpResult {
     let frames: Vec<f64> = if is_animated(&p) { p["k"].as_array().unwrap().iter().filter_map(|k| k.get("t").and_then(Value::as_f64)).collect() } else { vec![] };
     Ok(json!({"exists": true, "value": value, "animated": is_animated(&p), "keyed": frames.iter().any(|f| (f - frame).abs() < 1e-6),
         "keyframes": frames, "slot": p.get("sid").cloned().unwrap_or(Value::Null)}))
+}
+
+fn set_property(cx: &mut Cx, a: &Value) -> OpResult {
+    let ptr = resolve(cx, a)?;
+    let value = a.get("value").ok_or_else(|| OpError("missing 'value'".into()))?;
+    util::write_value(cx, &ptr, value, opt_f64(a, "frame").map(f64::round))?;
+    Ok(json!({"ok": true}))
 }

@@ -109,3 +109,15 @@ fn get_property_reports_value_and_keys() {
     assert_eq!(r["keyframes"], json!([0.0, 10.0]));
     assert_eq!(ok(&mut e, "get_property", json!({"layer": "A", "property": "rotation", "frame": 10}))["keyed"], true);
 }
+
+#[test]
+fn set_property_static_or_keyframe() {
+    let mut e = setup();
+    ok(&mut e, "set_property", json!({"layer": "A", "shape": "0", "property": "size", "value": [40, 20]}));
+    assert_eq!(layer(&e, 0)["shapes"][0]["s"]["k"], json!([40.0, 20.0]));
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "property": "opacity", "frame": 0, "value": 100}));
+    ok(&mut e, "set_property", json!({"layer": "A", "property": "opacity", "value": 30, "frame": 12}));
+    let k = layer(&e, 0)["ks"]["o"]["k"].clone();
+    assert_eq!(k.as_array().unwrap().len(), 2);
+    assert_eq!(k[1]["t"], 12.0);
+}

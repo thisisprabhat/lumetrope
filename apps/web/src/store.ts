@@ -1,9 +1,10 @@
 import { create } from "zustand";
-import { readInfo, type Info } from "./engine";
+import { engine, readInfo, type Info } from "./engine";
 import { clampFrame } from "./lib/time";
 
 export type Mode = "animate" | "state" | "preview";
 export type Tool = "select" | "rect" | "ellipse" | "polygon" | "star" | "pen" | "text" | "hand";
+export type LeftTab = "layers" | "assets" | "segments" | "themes" | "colors" | "history";
 
 export interface Toast {
   id: number;
@@ -23,6 +24,19 @@ interface EditorState {
   zoom: number;
   fileName: string;
   toasts: Toast[];
+  selection: string[];
+  shape: string | null;
+  scene: string;
+  leftTab: LeftTab;
+  snapping: boolean;
+  grid: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  select: (ids: string[], shape?: string | null) => void;
+  setScene: (s: string) => void;
+  setLeftTab: (t: LeftTab) => void;
+  setSnapping: (b: boolean) => void;
+  setGrid: (b: boolean) => void;
   refresh: () => void;
   setFrame: (f: number) => void;
   setPlaying: (p: boolean) => void;
@@ -50,10 +64,24 @@ export const useEditor = create<EditorState>((set, get) => ({
   zoom: 1,
   fileName: "Untitled",
   toasts: [],
+  selection: [],
+  shape: null,
+  scene: "root",
+  leftTab: "layers",
+  snapping: true,
+  grid: false,
+  canUndo: false,
+  canRedo: false,
   refresh: () => {
     const info = readInfo();
-    set({ info, revision: info.revision, frame: clampFrame(get().frame, info.ip, info.op) });
+    const e = engine();
+    set({ info, revision: info.revision, frame: clampFrame(get().frame, info.ip, info.op), canUndo: e.can_undo(), canRedo: e.can_redo() });
   },
+  select: (selection, shape = null) => set({ selection, shape }),
+  setScene: (scene) => set({ scene, selection: [], shape: null }),
+  setLeftTab: (leftTab) => set({ leftTab }),
+  setSnapping: (snapping) => set({ snapping }),
+  setGrid: (grid) => set({ grid }),
   setFrame: (f) => {
     const info = get().info;
     set({ frame: info ? clampFrame(f, info.ip, info.op) : Math.max(0, Math.floor(f)) });

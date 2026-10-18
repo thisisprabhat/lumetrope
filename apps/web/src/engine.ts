@@ -45,3 +45,33 @@ export function renderTo(ctx: CanvasRenderingContext2D, frame: number, w: number
   const px = engine().render(frame, w, h);
   ctx.putImageData(new ImageData(new Uint8ClampedArray(px.buffer, px.byteOffset, px.byteLength), w, h), 0, 0);
 }
+
+export class ToolError extends Error {}
+
+/** Run a catalogue tool; throws ToolError with the engine's message on failure. */
+export function call<T = any>(tool: string, args: object = {}): T {
+  const r = JSON.parse(engine().apply(tool, JSON.stringify(args)));
+  if (r.error !== undefined) throw new ToolError(String(r.error));
+  return r.ok as T;
+}
+
+export interface Geometry {
+  id: string;
+  local: [number, number, number, number];
+  bounds: [number, number, number, number];
+  corners: [number, number][];
+  matrix: [number, number, number, number, number, number];
+  anchor: [number, number];
+}
+
+export function geometry(id: string, frame: number): Geometry | null {
+  return JSON.parse(engine().layer_geometry(id, frame));
+}
+
+export function hitTest(x: number, y: number, frame: number): string | null {
+  return engine().hit_test(x, y, frame) || null;
+}
+
+export function projectValue(): any {
+  return JSON.parse(engine().project_json());
+}
