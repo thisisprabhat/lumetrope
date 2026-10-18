@@ -24,6 +24,8 @@ pub fn tools() -> Vec<ToolDef> {
     v.extend(super::shapes::defs());
     v.extend(super::fx::defs());
     v.extend(super::text::defs());
+    v.extend(super::themes::defs());
+    v.extend(super::machines::defs());
     v
 }
 

@@ -6,9 +6,11 @@ pub mod catalog;
 pub mod fx;
 pub mod keys;
 pub mod layers;
+pub mod machines;
 pub mod scene;
 pub mod shapes;
 pub mod text;
+pub mod themes;
 pub mod util;
 
 use serde_json::{Map, Value};
