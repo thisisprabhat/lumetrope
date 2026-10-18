@@ -67,6 +67,14 @@ impl Engine {
         self.inner.catalog().to_string()
     }
 
+    pub fn begin_batch(&mut self) {
+        self.inner.begin_batch();
+    }
+
+    pub fn end_batch(&mut self) {
+        self.inner.end_batch();
+    }
+
     pub fn undo(&mut self) -> bool {
         self.inner.undo()
     }

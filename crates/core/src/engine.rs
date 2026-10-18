@@ -74,6 +74,15 @@ impl Engine {
         }
     }
 
+    /// Merge the following tool calls into one undo step (e.g. a canvas drag).
+    pub fn begin_batch(&mut self) {
+        self.hist.begin_batch("batch");
+    }
+
+    pub fn end_batch(&mut self) {
+        self.hist.end_batch();
+    }
+
     pub fn catalog(&self) -> Value {
         ops::catalog::catalog_json()
     }

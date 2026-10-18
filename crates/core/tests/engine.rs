@@ -110,3 +110,20 @@ fn engine_hit_test_and_geometry() {
     assert_eq!(g["bounds"], json!([0.0, 0.0, 64.0, 32.0]));
     assert!(e.layer_geometry("root:99", 0.0).is_null());
 }
+
+#[test]
+fn batch_groups_many_ops_into_one_undo_step() {
+    let mut e = Engine::new();
+    e.begin_batch();
+    for w in [100, 200, 300] {
+        e.apply("set_scene_settings", &json!({"width": w}));
+    }
+    e.end_batch();
+    assert_eq!(e.info()["w"], 300.0);
+    assert!(e.undo());
+    assert_eq!(e.info()["w"], 512.0);
+    assert!(!e.can_undo());
+    e.begin_batch();
+    e.end_batch();
+    assert!(!e.can_undo(), "empty batch records nothing");
+}

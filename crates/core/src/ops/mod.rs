@@ -233,6 +233,8 @@ pub struct History {
     undo: Vec<Tx>,
     redo: Vec<Tx>,
     cap: usize,
+    /// When batching, pushes merge into this transaction.
+    batch: Option<Tx>,
 }
 
 impl Default for History {
@@ -243,10 +245,26 @@ impl Default for History {
 
 impl History {
     pub fn with_cap(cap: usize) -> Self {
-        History { undo: vec![], redo: vec![], cap: cap.max(1) }
+        History { undo: vec![], redo: vec![], cap: cap.max(1), batch: None }
+    }
+    /// Start merging subsequent transactions into one undo step.
+    pub fn begin_batch(&mut self, label: &str) {
+        if self.batch.is_none() {
+            self.batch = Some(Tx::new(label));
+        }
+    }
+    /// Finish the current batch (no-op if empty).
+    pub fn end_batch(&mut self) {
+        if let Some(b) = self.batch.take() {
+            self.push(b);
+        }
     }
     pub fn push(&mut self, tx: Tx) {
         if tx.is_empty() {
+            return;
+        }
+        if let Some(b) = self.batch.as_mut() {
+            b.edits.extend(tx.edits);
             return;
         }
         self.undo.push(tx);
@@ -263,6 +281,7 @@ impl History {
     }
     /// Undo the last transaction; returns its label.
     pub fn undo(&mut self, root: &mut Value) -> Option<String> {
+        self.end_batch();
         let tx = self.undo.pop()?;
         tx.undo(root);
         let l = tx.label.clone();
@@ -277,6 +296,7 @@ impl History {
         Some(l)
     }
     pub fn clear(&mut self) {
+        self.batch = None;
         self.undo.clear();
         self.redo.clear();
     }

@@ -45,6 +45,13 @@ pub fn defs() -> Vec<ToolDef> {
             handler: set_keyframe_easing,
         },
         ToolDef {
+            name: "get_property",
+            description: "Read one property at a frame: evaluated value, whether it is animated, whether a keyframe sits on this frame, and all keyframe frames.",
+            schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer", "property"]),
+            mutates: false,
+            handler: get_property,
+        },
+        ToolDef {
             name: "read_keyframes",
             description: "List keyframes (frame, value, easing) of one property, or of every animated property of a layer when 'property' is omitted.",
             schema: || obj(target(), &["layer"]),
@@ -310,4 +317,24 @@ fn copy_animation(cx: &mut Cx, a: &Value) -> OpResult {
         n += 1;
     }
     Ok(json!({"copied": n}))
+}
+
+fn get_property(cx: &mut Cx, a: &Value) -> OpResult {
+    let ptr = resolve(cx, a)?;
+    let frame = opt_f64(a, "frame").unwrap_or(0.0);
+    let p = cx.get(&ptr).cloned().unwrap_or(Value::Null);
+    if p.is_null() {
+        return Ok(json!({"exists": false}));
+    }
+    let key = ptr.rsplit('/').next().unwrap_or("");
+    let value = if matches!(key, "ks" | "pt") {
+        let sp = crate::model::shape_prop(Some(&p)).unwrap_or_default();
+        let b = crate::anim::eval_shape(&sp, frame);
+        json!({"c": b.c, "v": b.v, "i": b.i, "o": b.o})
+    } else {
+        json!(read_value(cx, &ptr, frame))
+    };
+    let frames: Vec<f64> = if is_animated(&p) { p["k"].as_array().unwrap().iter().filter_map(|k| k.get("t").and_then(Value::as_f64)).collect() } else { vec![] };
+    Ok(json!({"exists": true, "value": value, "animated": is_animated(&p), "keyed": frames.iter().any(|f| (f - frame).abs() < 1e-6),
+        "keyframes": frames, "slot": p.get("sid").cloned().unwrap_or(Value::Null)}))
 }

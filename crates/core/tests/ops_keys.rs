@@ -95,3 +95,17 @@ fn path_keyframes_on_shape() {
     let k = layer(&e, 0)["shapes"][0]["ks"]["k"].clone();
     assert_eq!(k[1]["s"][0]["v"][1], json!([20, 0]));
 }
+
+#[test]
+fn get_property_reports_value_and_keys() {
+    let mut e = setup();
+    let st = ok(&mut e, "get_property", json!({"layer": "A", "property": "position", "frame": 0}));
+    assert_eq!(st["value"], json!([200.0, 150.0, 0.0]));
+    assert_eq!(st["animated"], false);
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "property": "rotation", "frame": 0, "value": 0, "easing": "linear"}));
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "property": "rotation", "frame": 10, "value": 100}));
+    let r = ok(&mut e, "get_property", json!({"layer": "A", "property": "rotation", "frame": 5}));
+    assert_eq!((r["value"][0].as_f64(), r["animated"].as_bool(), r["keyed"].as_bool()), (Some(50.0), Some(true), Some(false)));
+    assert_eq!(r["keyframes"], json!([0.0, 10.0]));
+    assert_eq!(ok(&mut e, "get_property", json!({"layer": "A", "property": "rotation", "frame": 10}))["keyed"], true);
+}
