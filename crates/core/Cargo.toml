@@ -12,3 +12,4 @@ base64 = "0.22"
 jpeg-decoder = { version = "0.3", default-features = false }
 ttf-parser = { version = "0.24", default-features = false, features = ["std", "opentype-layout", "variable-fonts", "glyph-names"] }
 usvg = { version = "0.45", default-features = false }
+zip = { version = "2.2", default-features = false, features = ["deflate"] }

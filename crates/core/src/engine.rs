@@ -61,6 +61,7 @@ impl Engine {
         self.view = "root".into();
         self.project = p;
         self.ctx.images.clear();
+        self.register_project_fonts();
         self.hist.clear();
         self.touch();
     }
@@ -155,7 +156,10 @@ impl Engine {
     /// Parsed model of the active animation (cached per revision).
     pub fn animation(&mut self) -> &Animation {
         if self.cache.as_ref().map(|c| c.0) != Some(self.revision) {
-            let a = model::parse(project::active_anim(&self.project)).unwrap_or_default();
+            let mut src = project::active_anim(&self.project).clone();
+            let theme = self.project.pointer("/settings/preview_theme").and_then(Value::as_str).and_then(|t| self.project.get("themes").and_then(|th| th.get(t))).cloned();
+            crate::dotlottie::apply_theme(&mut src, theme.as_ref(), &project::active_id(&self.project));
+            let a = model::parse(&src).unwrap_or_default();
             self.cache = Some((self.revision, a));
         }
         &self.cache.as_ref().unwrap().1
@@ -254,8 +258,33 @@ impl Engine {
         &self.ctx.fonts
     }
 
+    /// Register a font for rendering and embed it in the project (exported to `f/`).
     pub fn add_font(&mut self, name: &str, bytes: Vec<u8>) -> bool {
-        self.ctx.fonts.add(name, bytes)
+        use base64::Engine as _;
+        let data = base64::engine::general_purpose::STANDARD.encode(&bytes);
+        if !self.ctx.fonts.add(name, bytes) {
+            return false;
+        }
+        if let Some(f) = self.project.get_mut("fonts").and_then(Value::as_object_mut) {
+            f.insert(name.to_string(), json!({"file": format!("{name}.ttf"), "data": data}));
+        }
+        self.touch();
+        true
+    }
+
+    fn register_project_fonts(&mut self) {
+        use base64::Engine as _;
+        let fonts = self.project.get("fonts").and_then(Value::as_object).cloned().unwrap_or_default();
+        for (name, f) in fonts {
+            if let Some(b) = f.get("data").and_then(Value::as_str).and_then(|d| base64::engine::general_purpose::STANDARD.decode(d).ok()) {
+                self.ctx.fonts.add(&name, b);
+            }
+        }
+    }
+
+    /// The whole project as a dotLottie v2 archive.
+    pub fn export_dotlottie(&self) -> Result<Vec<u8>, String> {
+        crate::dotlottie::write(&self.project)
     }
 
     pub fn add_image(&mut self, id: &str, bytes: &[u8]) -> bool {

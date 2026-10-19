@@ -50,6 +50,11 @@ impl Engine {
         self.inner.export_lottie()
     }
 
+    /// The project as a dotLottie v2 archive (animations, themes, state machines, images, fonts).
+    pub fn export_dotlottie(&self) -> Result<Vec<u8>, JsValue> {
+        self.inner.export_dotlottie().map_err(err)
+    }
+
     pub fn add_font(&mut self, name: &str, bytes: Vec<u8>) -> bool {
         self.inner.add_font(name, bytes)
     }
