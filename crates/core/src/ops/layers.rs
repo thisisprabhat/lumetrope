@@ -172,6 +172,13 @@ pub fn defs() -> Vec<ToolDef> {
             handler: distribute_layers,
         },
         ToolDef {
+            name: "nudge_layers",
+            description: "Move layers by a scene-space delta (dx, dy) like dragging on the canvas: static positions shift; animated positions get a keyframe at 'frame'. Parented layers are handled.",
+            schema: || obj(json!({"layers": {"type": "array", "items": {"type": "string"}}, "dx": {"type": "number"}, "dy": {"type": "number"}, "frame": {"type": "number"}}), &["layers"]),
+            mutates: true,
+            handler: nudge_layers,
+        },
+        ToolDef {
             name: "set_transform",
             description: "Set transform properties of a layer (or a shape group via 'shape'). Static properties are replaced; animated ones get a keyframe at 'frame'. Rotation in degrees (clockwise), scale and opacity in percent.",
             schema: || {
@@ -547,31 +554,74 @@ pub fn geometry(cx: &Cx, id: &str, frame: f64) -> OpResult<hit::Geometry> {
     hit::layer_geometry(&parsed(cx), &FontRegistry::default(), id, frame).ok_or_else(|| OpError(format!("layer '{id}' not found")))
 }
 
-/// Move a layer by a composition-space delta (all position keyframes shift).
-pub fn translate(cx: &mut Cx, r: &LayerRef, dx: f64, dy: f64, frame: f64) -> OpResult<()> {
+/// Convert a composition-space delta into the layer's parent space.
+fn parent_delta(cx: &Cx, r: &LayerRef, dx: f64, dy: f64, frame: f64) -> (f64, f64) {
     let anim = parsed(cx);
     let (comp, _) = r.id.rsplit_once(':').unwrap_or(("root", ""));
     let layers: &[model::Layer] = if comp == "root" { &anim.layers } else { anim.asset(comp).and_then(|a| a.layers.as_deref()).unwrap_or(&[]) };
-    let (mut ldx, mut ldy) = (dx, dy);
     if let Some(pid) = layers.get(r.index).and_then(|l| l.parent) {
         if let Some(pi) = layers.iter().position(|l| l.ind == Some(pid)) {
-            let pm = sc::layer_matrix(layers, pi, frame);
-            if let Some(inv) = pm.invert() {
-                let lin = Affine { e: 0.0, f: 0.0, ..inv };
-                let d = lin.apply([dx, dy]);
-                ldx = d[0];
-                ldy = d[1];
+            if let Some(inv) = sc::layer_matrix(layers, pi, frame).invert() {
+                let d = Affine { e: 0.0, f: 0.0, ..inv }.apply([dx, dy]);
+                return (d[0], d[1]);
             }
         }
     }
+    (dx, dy)
+}
+
+fn is_split(cx: &Cx, p_ptr: &str) -> bool {
+    cx.get(p_ptr).and_then(|p| p.get("s")).map(|s| s.as_bool().unwrap_or(false) || s.as_i64() == Some(1)).unwrap_or(false)
+}
+
+/// Move a layer by a composition-space delta (all position keyframes shift).
+pub fn translate(cx: &mut Cx, r: &LayerRef, dx: f64, dy: f64, frame: f64) -> OpResult<()> {
+    let (ldx, ldy) = parent_delta(cx, r, dx, dy, frame);
     let base = format!("{}/ks/p", r.ptr());
-    let p = cx.get(&base).cloned().unwrap_or_else(|| static_prop(json!([0, 0, 0])));
-    if p.get("s").and_then(|s| s.as_bool().or(s.as_i64().map(|x| x == 1))) == Some(true) {
+    if cx.get(&base).is_none() {
+        cx.set(&base, static_prop(json!([0, 0, 0])))?;
+    }
+    if is_split(cx, &base) {
         shift_prop(cx, &format!("{base}/x"), &[ldx])?;
         shift_prop(cx, &format!("{base}/y"), &[ldy])
     } else {
         shift_prop(cx, &base, &[ldx, ldy])
     }
+}
+
+/// Move a layer like a canvas drag: static positions shift, animated ones get a keyframe at `frame`.
+pub fn nudge(cx: &mut Cx, r: &LayerRef, dx: f64, dy: f64, frame: f64) -> OpResult<()> {
+    let (ldx, ldy) = parent_delta(cx, r, dx, dy, frame);
+    let base = format!("{}/ks/p", r.ptr());
+    let targets: Vec<(String, Vec<f64>)> = if is_split(cx, &base) { vec![(format!("{base}/x"), vec![ldx]), (format!("{base}/y"), vec![ldy])] } else { vec![(base.clone(), vec![ldx, ldy])] };
+    for (ptr, d) in targets {
+        if cx.get(&ptr).map(util::is_animated).unwrap_or(false) {
+            let mut v = util::read_value(cx, &ptr, frame);
+            for (i, x) in d.iter().enumerate() {
+                if let Some(c) = v.get_mut(i) {
+                    *c += x;
+                }
+            }
+            util::upsert_keyframe(cx, &ptr, frame, &json!(v), None)?;
+        } else {
+            if cx.get(&ptr).is_none() {
+                cx.set(&ptr, static_prop(json!([0, 0, 0])))?;
+            }
+            shift_prop(cx, &ptr, &d)?;
+        }
+    }
+    Ok(())
+}
+
+fn nudge_layers(cx: &mut Cx, a: &Value) -> OpResult {
+    let frame = util::frame_arg(a).unwrap_or(0.0).round();
+    let (dx, dy) = (opt_f64(a, "dx").unwrap_or(0.0), opt_f64(a, "dy").unwrap_or(0.0));
+    let keys: Vec<String> = a.get("layers").and_then(Value::as_array).map(|v| v.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
+    for k in &keys {
+        let r = cx.layer(k)?;
+        nudge(cx, &r, dx, dy, frame)?;
+    }
+    Ok(json!({"moved": keys.len()}))
 }
 
 /// Add `d` to a property's static value or to every keyframe value.

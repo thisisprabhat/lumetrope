@@ -170,3 +170,22 @@ fn null_and_solid() {
     assert_eq!(layer(&e, 0)["sw"], 400.0);
     assert_ne!(n["id"], s["id"]);
 }
+
+#[test]
+fn nudge_static_animated_and_parented() {
+    let mut e = eng();
+    ok(&mut e, "create_shape", json!({"type": "rect", "name": "S", "position": [100, 100]}));
+    ok(&mut e, "create_shape", json!({"type": "rect", "name": "A", "position": [100, 100]}));
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "property": "position", "frame": 0, "value": [100, 100]}));
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "property": "position", "frame": 20, "value": [200, 100]}));
+    ok(&mut e, "create_null", json!({"name": "P", "position": [0, 0]}));
+    ok(&mut e, "set_transform", json!({"layer": "P", "scale": [200, 200]}));
+    ok(&mut e, "create_shape", json!({"type": "rect", "name": "C", "position": [10, 10]}));
+    ok(&mut e, "set_parent", json!({"layer": "C", "parent": "P"}));
+    ok(&mut e, "nudge_layers", json!({"layers": ["S", "A", "C"], "dx": 10, "dy": -4, "frame": 10}));
+    let get = |e: &mut lumetrope_core::engine::Engine, l: &str, f: f64| ok(e, "get_property", json!({"layer": l, "property": "position", "frame": f}))["value"].clone();
+    assert_eq!(get(&mut e, "S", 0.0), json!([110.0, 96.0, 0.0]));
+    assert_eq!(get(&mut e, "A", 10.0)[0].as_f64().unwrap().round(), 160.0, "animated layer keyed at frame 10");
+    assert_eq!(get(&mut e, "A", 0.0)[0], 100.0, "other keyframes untouched");
+    assert_eq!(get(&mut e, "C", 0.0), json!([15.0, 8.0, 0.0]), "delta halved by the 200% parent");
+}
