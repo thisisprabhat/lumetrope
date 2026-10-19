@@ -97,6 +97,26 @@ pub fn render(anim: &Animation, ctx: &RenderCtx, frame: f64, w: u32, h: u32) -> 
     pm
 }
 
+/// Render through a camera: screen = comp × `scale` + (`tx`, `ty`), into a `w`×`h`
+/// viewport. Content outside the composition bounds is clipped away.
+#[allow(clippy::too_many_arguments)]
+pub fn render_view(anim: &Animation, ctx: &RenderCtx, frame: f64, w: u32, h: u32, scale: f64, tx: f64, ty: f64) -> Pixmap {
+    let mut pm = Pixmap::new(w.max(1), h.max(1)).expect("non-zero pixmap");
+    let base = Affine { a: scale, b: 0.0, c: 0.0, d: scale, e: tx, f: ty };
+    // Skip work entirely when the artboard is off-screen.
+    let (x0, y0, x1, y1) = (tx, ty, tx + anim.w * scale, ty + anim.h * scale);
+    if x1 <= 0.0 || y1 <= 0.0 || x0 >= w as f64 || y0 >= h as f64 {
+        return pm;
+    }
+    draw_comp(&mut pm, anim, &anim.layers, ctx, frame, &base, 0);
+    if let Some(rect) = tiny_skia::Rect::from_ltrb(x0.max(0.0) as f32, y0.max(0.0) as f32, x1.min(w as f64) as f32, y1.min(h as f64) as f32) {
+        let mut clip = tiny_skia::Mask::new(pm.width(), pm.height()).expect("mask");
+        clip.fill_path(&tiny_skia::PathBuilder::from_rect(rect), tiny_skia::FillRule::Winding, false, tiny_skia::Transform::identity());
+        pm.apply_mask(&clip);
+    }
+    pm
+}
+
 /// Draw a list of layers (bottom-most last in the array) at composition time `t`.
 pub fn draw_comp(canvas: &mut Pixmap, anim: &Animation, layers: &[Layer], ctx: &RenderCtx, t: f64, base: &Affine, depth: u32) {
     if depth > 16 {

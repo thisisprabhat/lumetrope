@@ -38,6 +38,11 @@ impl Engine {
         self.inner.render_rgba(frame, w, h)
     }
 
+    /// Viewport render through a camera: screen = comp × scale + (tx, ty).
+    pub fn render_view(&mut self, frame: f64, w: u32, h: u32, scale: f64, tx: f64, ty: f64) -> Vec<u8> {
+        self.inner.render_view_rgba(frame, w, h, scale, tx, ty)
+    }
+
     pub fn project_json(&self) -> String {
         self.inner.project_json()
     }

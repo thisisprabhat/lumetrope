@@ -218,14 +218,18 @@ impl Engine {
         let anim = self.view_animation();
         let pm = render::render(&anim, &self.ctx, frame, w, h);
         let mut out = pm.take();
-        for px in out.chunks_exact_mut(4) {
-            let a = px[3] as u32;
-            if a > 0 && a < 255 {
-                for c in px.iter_mut().take(3) {
-                    *c = ((*c as u32 * 255 + a / 2) / a).min(255) as u8;
-                }
-            }
-        }
+        unpremultiply(&mut out);
+        out
+    }
+
+    /// Render through a camera into a viewport-sized straight-alpha RGBA buffer:
+    /// screen = comp × scale + (tx, ty). Keeps zoomed views crisp and cheap.
+    pub fn render_view_rgba(&mut self, frame: f64, w: u32, h: u32, scale: f64, tx: f64, ty: f64) -> Vec<u8> {
+        self.sync_images();
+        let anim = self.view_animation();
+        let pm = render::render_view(&anim, &self.ctx, frame, w, h, scale, tx, ty);
+        let mut out = pm.take();
+        unpremultiply(&mut out);
         out
     }
 
@@ -289,5 +293,16 @@ impl Engine {
 
     pub fn add_image(&mut self, id: &str, bytes: &[u8]) -> bool {
         self.ctx.add_image(id, bytes)
+    }
+}
+
+fn unpremultiply(px: &mut [u8]) {
+    for p in px.chunks_exact_mut(4) {
+        let a = p[3] as u32;
+        if a > 0 && a < 255 {
+            for c in p.iter_mut().take(3) {
+                *c = ((*c as u32 * 255 + a / 2) / a).min(255) as u8;
+            }
+        }
     }
 }

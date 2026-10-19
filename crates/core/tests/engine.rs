@@ -144,3 +144,16 @@ fn view_scene_renders_and_hit_tests_a_nested_scene() {
     e.set_view_scene("missing");
     assert_eq!(e.info()["view"], "root", "unknown scenes fall back to root");
 }
+
+#[test]
+fn render_view_maps_camera_and_clips_to_artboard() {
+    let mut e = Engine::new();
+    e.load_file("a.json", lottie().to_string().as_bytes()).unwrap();
+    // 64×32 red rect filling the comp; camera: scale 2, offset (10, 5) in a 200×100 viewport
+    let px = e.render_view_rgba(0.0, 200, 100, 2.0, 10.0, 5.0);
+    assert_eq!(px.len(), 200 * 100 * 4);
+    let at = |x: usize, y: usize| px[(y * 200 + x) * 4..(y * 200 + x) * 4 + 4].to_vec();
+    assert_eq!(at(10 + 64, 5 + 32)[0], 255, "comp centre (32,16) → screen (74,37)");
+    assert_eq!(at(5, 2)[3], 0, "outside the artboard is transparent");
+    assert_eq!(at(10 + 128 + 3, 20)[3], 0, "right of the artboard is clipped");
+}
