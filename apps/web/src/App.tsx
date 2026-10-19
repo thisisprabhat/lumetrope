@@ -1,8 +1,13 @@
 import { useEffect } from "react";
+import { CanvasOverlay } from "./components/CanvasOverlay";
 import { Stage } from "./components/Stage";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
 import { openUrl } from "./files";
+import { LeftSidebar } from "./panels/LeftSidebar";
+import { PropertiesPanel } from "./panels/PropertiesPanel";
+import { Timeline } from "./panels/Timeline";
+import { useShortcuts } from "./shortcuts";
 import { useEditor } from "./store";
 import { usePlayback } from "./usePlayback";
 
@@ -10,6 +15,7 @@ let openedFromUrl = false;
 
 export function App() {
   const refresh = useEditor((s) => s.refresh);
+  const mode = useEditor((s) => s.mode);
   useEffect(() => {
     refresh();
     const open = new URLSearchParams(location.search).get("open");
@@ -19,18 +25,19 @@ export function App() {
     }
   }, [refresh]);
   usePlayback();
+  useShortcuts();
   return (
-    <div className="app">
+    <div className={`app mode-${mode}`}>
       <TopBar />
       <aside className="panel left">
-        <div className="panel-empty">Layers</div>
+        <LeftSidebar />
       </aside>
-      <Stage />
+      <Stage overlay={mode === "animate" ? (zoom) => <CanvasOverlay zoom={zoom} /> : undefined} />
       <aside className="panel right">
-        <div className="panel-empty">Properties</div>
+        <PropertiesPanel />
       </aside>
       <section className="panel bottom">
-        <div className="panel-empty">Timeline</div>
+        <Timeline />
       </section>
       <Toasts />
     </div>

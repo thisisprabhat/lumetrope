@@ -1,7 +1,7 @@
-import { engine } from "../engine";
-import { download, openFile, pickFile } from "../files";
+import { commands } from "../commands";
 import { useEditor, type Mode, type Tool } from "../store";
 import { Icon } from "./Icon";
+import { Menu } from "./Menu";
 
 const TOOLS: { id: Tool; icon: string; tip: string }[] = [
   { id: "select", icon: "select", tip: "Select (V)" },
@@ -21,17 +21,7 @@ const MODES: { id: Mode; label: string }[] = [
 ];
 
 export function TopBar() {
-  const { tool, setTool, mode, setMode, fileName, zoom, setZoom, toast } = useEditor();
-
-  const open = async () => {
-    const f = await pickFile();
-    if (f) await openFile(f);
-  };
-
-  const exportJson = () => {
-    download(`${fileName || "animation"}.json`, engine().export_lottie(), "application/json");
-    toast("Exported Lottie JSON");
-  };
+  const { tool, setTool, mode, setMode, fileName, zoom, setZoom, canUndo, canRedo, selection, snapping, setSnapping, grid, setGrid } = useEditor();
 
   return (
     <header className="topbar">
@@ -41,8 +31,43 @@ export function TopBar() {
         </svg>
         Lumetrope
       </div>
-      <button className="icon-btn" data-tip="Open (⌘O)" onClick={open}>
-        <Icon name="open" />
+      <Menu
+        trigger={<span className="menu-word">File</span>}
+        items={[
+          { label: "New project", onSelect: commands.newProject },
+          { label: "Open…", shortcut: "⌘O", onSelect: () => void commands.open() },
+          { label: "Import SVG, Lottie, image or font…", onSelect: () => void commands.import() },
+          { separator: true, label: "" },
+          { label: "Save project", shortcut: "⌘S", onSelect: commands.saveProjectJson },
+          { label: "Export Lottie JSON", shortcut: "⌘E", onSelect: commands.exportJson },
+        ]}
+      />
+      <Menu
+        trigger={<span className="menu-word">Edit</span>}
+        items={[
+          { label: "Undo", shortcut: "⌘Z", onSelect: commands.undo, disabled: !canUndo },
+          { label: "Redo", shortcut: "⇧⌘Z", onSelect: commands.redo, disabled: !canRedo },
+          { separator: true, label: "" },
+          { label: "Duplicate", shortcut: "⌘D", onSelect: commands.duplicate, disabled: !selection.length },
+          { label: "Delete", shortcut: "⌫", onSelect: commands.remove, disabled: !selection.length },
+          { label: "Select all", shortcut: "⌘A", onSelect: commands.selectAll },
+          { label: "Group into nested scene", shortcut: "⌘G", onSelect: commands.precompose, disabled: !selection.length },
+        ]}
+      />
+      <Menu
+        trigger={<span className="menu-word">View</span>}
+        items={[
+          { label: "Zoom to fit", shortcut: "⌘0", onSelect: commands.fit },
+          { label: "Snapping", checked: snapping, onSelect: () => setSnapping(!snapping) },
+          { label: "Grid", checked: grid, onSelect: () => setGrid(!grid) },
+        ]}
+      />
+      <div className="sep" />
+      <button className="icon-btn" data-tip="Undo (⌘Z)" disabled={!canUndo} onClick={commands.undo}>
+        <Icon name="undo" />
+      </button>
+      <button className="icon-btn" data-tip="Redo (⇧⌘Z)" disabled={!canRedo} onClick={commands.redo}>
+        <Icon name="redo" />
       </button>
       <div className="sep" />
       {TOOLS.map((t) => (
@@ -74,7 +99,7 @@ export function TopBar() {
         ))}
       </div>
       <div className="sep" />
-      <button className="btn primary" onClick={exportJson}>
+      <button className="btn primary" onClick={commands.exportJson}>
         <Icon name="export" size={14} /> Export
       </button>
     </header>

@@ -7,3 +7,4 @@ pkg/
 .vite/
 .superpowers/
 apps/web/tsconfig.tsbuildinfo
+samples/lottiefiles/

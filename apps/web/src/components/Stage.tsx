@@ -5,7 +5,7 @@ import { useEditor } from "../store";
 import { PlayerBar } from "./PlayerBar";
 
 /** Canvas stage: artboard render, zoom/pan, drag-and-drop open. */
-export function Stage({ children }: { children?: React.ReactNode }) {
+export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode }) {
   const info = useEditor((s) => s.info);
   const revision = useEditor((s) => s.revision);
   const frame = useEditor((s) => s.frame);
@@ -18,7 +18,6 @@ export function Stage({ children }: { children?: React.ReactNode }) {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const panDrag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-  const space = useRef(false);
 
   const fit = useCallback(() => {
     if (!info || !view.w) return;
@@ -58,21 +57,6 @@ export function Stage({ children }: { children?: React.ReactNode }) {
     renderTo(ctx, frame, pxW, pxH);
   }, [revision, frame, pxW, pxH, info]);
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !(e.target instanceof HTMLInputElement)) space.current = true;
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code === "Space") space.current = false;
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-    };
-  }, []);
-
   const onWheel = (e: React.WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
       const rect = viewRef.current!.getBoundingClientRect();
@@ -88,7 +72,7 @@ export function Stage({ children }: { children?: React.ReactNode }) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (e.button === 1 || tool === "hand" || space.current) {
+    if (e.button === 1 || tool === "hand") {
       panDrag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
       (e.target as Element).setPointerCapture(e.pointerId);
       e.stopPropagation();
@@ -134,9 +118,7 @@ export function Stage({ children }: { children?: React.ReactNode }) {
             <canvas ref={canvasRef} width={pxW} height={pxH} />
           </div>
         )}
-        {info && children && (
-          <div style={{ position: "absolute", left, top, width: cssW, height: cssH }}>{children}</div>
-        )}
+        {info && overlay && <div style={{ position: "absolute", left, top, width: cssW, height: cssH }}>{overlay(zoom)}</div>}
       </div>
       <PlayerBar />
       {dragging && <div className="drop-hint">Drop a .json, .lottie or .svg to open</div>}
