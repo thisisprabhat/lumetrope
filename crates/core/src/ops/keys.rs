@@ -10,7 +10,8 @@ fn target() -> Value {
     json!({
         "layer": {"type": "string", "description": "Layer id or unique name"},
         "shape": {"type": "string", "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"},
-        "property": {"type": "string", "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"}
+        "property": {"type": "string", "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"},
+        "path": {"type": "string", "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"}
     })
 }
 
@@ -26,35 +27,42 @@ pub fn defs() -> Vec<ToolDef> {
         ToolDef {
             name: "set_keyframe",
             description: "Add or replace a keyframe on one property at an integer frame. A static property becomes animated. Optional easing (preset name, 'hold', or [x1,y1,x2,y2]) applies to the segment starting at this keyframe.",
-            schema: || obj(with(target(), json!({"frame": {"type": "number", "minimum": 0}, "value": {"description": "Number, [x,y], colour hex, or bezier {v,i,o,c} for paths"}, "easing": {}})), &["layer", "property", "frame", "value"]),
+            schema: || obj(with(target(), json!({"frame": {"type": "number", "minimum": 0}, "value": {"description": "Number, [x,y], colour hex, or bezier {v,i,o,c} for paths"}, "easing": {}})), &["layer", "frame", "value"]),
             mutates: true,
             handler: set_keyframe,
         },
         ToolDef {
             name: "remove_keyframe",
             description: "Remove the keyframe at a frame. When one keyframe or none remains the property becomes static.",
-            schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer", "property", "frame"]),
+            schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer", "frame"]),
             mutates: true,
             handler: remove_keyframe,
         },
         ToolDef {
+            name: "move_keyframe",
+            description: "Move one keyframe from 'frame' to frame 'to' (fails if another keyframe is already there).",
+            schema: || obj(with(target(), json!({"frame": {"type": "number"}, "to": {"type": "number", "minimum": 0}})), &["layer", "frame", "to"]),
+            mutates: true,
+            handler: move_keyframe,
+        },
+        ToolDef {
             name: "set_keyframe_easing",
             description: "Set the easing of the segment that starts at the keyframe on 'frame'. Presets: linear, ease, ease_in, ease_out, ease_in_out, smooth, ease_in_back, ease_out_back, ease_in_out_back, snappy, hold — or a cubic bezier [x1,y1,x2,y2].",
-            schema: || obj(with(target(), json!({"frame": {"type": "number"}, "easing": {}})), &["layer", "property", "frame", "easing"]),
+            schema: || obj(with(target(), json!({"frame": {"type": "number"}, "easing": {}})), &["layer", "frame", "easing"]),
             mutates: true,
             handler: set_keyframe_easing,
         },
         ToolDef {
             name: "set_property",
             description: "Set any property's value. Static properties are replaced; animated ones get a keyframe at 'frame' (default 0). Use this for shape items, masks ('mask:<i>') and effects ('effect:<i>') as well as transforms.",
-            schema: || obj(with(target(), json!({"value": {}, "frame": {"type": "number"}})), &["layer", "property", "value"]),
+            schema: || obj(with(target(), json!({"value": {}, "frame": {"type": "number"}})), &["layer", "value"]),
             mutates: true,
             handler: set_property,
         },
         ToolDef {
             name: "get_property",
             description: "Read one property at a frame: evaluated value, whether it is animated, whether a keyframe sits on this frame, and all keyframe frames.",
-            schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer", "property"]),
+            schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer"]),
             mutates: false,
             handler: get_property,
         },
@@ -68,7 +76,7 @@ pub fn defs() -> Vec<ToolDef> {
         ToolDef {
             name: "clear_animation",
             description: "Remove all keyframes of a property, keeping its value at 'frame' (default the first keyframe) as a static value.",
-            schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer", "property"]),
+            schema: || obj(with(target(), json!({"frame": {"type": "number"}})), &["layer"]),
             mutates: true,
             handler: clear_animation,
         },
@@ -103,6 +111,18 @@ pub fn defs() -> Vec<ToolDef> {
 
 fn resolve(cx: &Cx, a: &Value) -> OpResult<String> {
     let r = cx.layer(arg_str(a, "layer")?)?;
+    if let Some(path) = opt_str(a, "path") {
+        // Raw JSON path inside the layer, e.g. "ks/p" or "shapes/1/c" (as listed by read_keyframes).
+        let ok = !path.is_empty() && path.split('/').all(|seg| !seg.is_empty() && seg != ".." && seg != ".");
+        if !ok {
+            return err(format!("invalid path '{path}'"));
+        }
+        let ptr = format!("{}/{}", r.ptr(), path.trim_start_matches('/'));
+        if cx.get(&ptr).map(|v| v.get("k").is_some()).unwrap_or(false) {
+            return Ok(ptr);
+        }
+        return err(format!("no animatable property at path '{path}'"));
+    }
     util::prop_ptr(cx, &r, opt_str(a, "shape"), arg_str(a, "property")?)
 }
 
@@ -210,7 +230,7 @@ fn describe(p: &Value) -> Value {
 
 fn read_keyframes(cx: &mut Cx, a: &Value) -> OpResult {
     let r = cx.layer(arg_str(a, "layer")?)?;
-    if opt_str(a, "property").is_some() {
+    if opt_str(a, "property").is_some() || opt_str(a, "path").is_some() {
         let ptr = resolve(cx, a)?;
         return Ok(describe(cx.get(&ptr).unwrap_or(&Value::Null)));
     }
@@ -250,7 +270,7 @@ fn clear_animation(cx: &mut Cx, a: &Value) -> OpResult {
 }
 
 fn target_ptrs(cx: &Cx, a: &Value) -> OpResult<Vec<String>> {
-    if opt_str(a, "property").is_some() {
+    if opt_str(a, "property").is_some() || opt_str(a, "path").is_some() {
         return Ok(vec![resolve(cx, a)?]);
     }
     let r = cx.layer(arg_str(a, "layer")?)?;
@@ -350,5 +370,27 @@ fn set_property(cx: &mut Cx, a: &Value) -> OpResult {
     let ptr = resolve(cx, a)?;
     let value = a.get("value").ok_or_else(|| OpError("missing 'value'".into()))?;
     util::write_value(cx, &ptr, value, opt_f64(a, "frame").map(f64::round))?;
+    Ok(json!({"ok": true}))
+}
+
+fn move_keyframe(cx: &mut Cx, a: &Value) -> OpResult {
+    let ptr = resolve(cx, a)?;
+    let frame = arg_f64(a, "frame")?;
+    let to = arg_f64(a, "to")?.round().max(0.0);
+    let p = cx.get(&ptr).cloned().unwrap_or(Value::Null);
+    if !is_animated(&p) {
+        return err("property is not animated");
+    }
+    let i = kf_index(&p, frame).ok_or_else(|| OpError(format!("no keyframe at frame {frame}")))?;
+    if (to - frame).abs() < 1e-9 {
+        return Ok(json!({"ok": true}));
+    }
+    if kf_index(&p, to).is_some() {
+        return err(format!("a keyframe already exists at frame {to}"));
+    }
+    let mut kfs = p["k"].as_array().cloned().unwrap();
+    kfs[i]["t"] = json!(to);
+    kfs.sort_by(|x, y| x["t"].as_f64().partial_cmp(&y["t"].as_f64()).unwrap_or(std::cmp::Ordering::Equal));
+    cx.set(&format!("{ptr}/k"), Value::Array(kfs))?;
     Ok(json!({"ok": true}))
 }

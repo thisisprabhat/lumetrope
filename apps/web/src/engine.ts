@@ -18,6 +18,7 @@ export interface Info {
   active: string;
   markers: Marker[];
   revision: number;
+  view: string;
 }
 
 let instance: Engine | null = null;

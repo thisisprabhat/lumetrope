@@ -82,7 +82,11 @@ export const useEditor = create<EditorState>((set, get) => ({
     set({ info, revision: info.revision, frame: clampFrame(get().frame, info.ip, info.op), canUndo: e.can_undo(), canRedo: e.can_redo() });
   },
   select: (selection, shape = null) => set({ selection, shape }),
-  setScene: (scene) => set({ scene, selection: [], shape: null }),
+  setScene: (scene) => {
+    engine().set_view_scene(scene);
+    set({ scene, selection: [], shape: null });
+    get().refresh();
+  },
   setLeftTab: (leftTab) => set({ leftTab }),
   setSnapping: (snapping) => set({ snapping }),
   setGrid: (grid) => set({ grid }),

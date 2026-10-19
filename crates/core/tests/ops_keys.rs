@@ -121,3 +121,16 @@ fn set_property_static_or_keyframe() {
     assert_eq!(k.as_array().unwrap().len(), 2);
     assert_eq!(k[1]["t"], 12.0);
 }
+
+#[test]
+fn raw_path_addressing_and_move_keyframe() {
+    let mut e = setup();
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "path": "ks/r", "frame": 0, "value": 0}));
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "path": "ks/r", "frame": 10, "value": 90}));
+    ok(&mut e, "set_keyframe", json!({"layer": "A", "path": "ks/r", "frame": 20, "value": 180}));
+    ok(&mut e, "move_keyframe", json!({"layer": "A", "path": "ks/r", "frame": 10, "to": 25}));
+    let ts: Vec<f64> = layer(&e, 0)["ks"]["r"]["k"].as_array().unwrap().iter().map(|k| k["t"].as_f64().unwrap()).collect();
+    assert_eq!(ts, vec![0.0, 20.0, 25.0], "keyframes re-sorted after move");
+    assert!(fail(&mut e, "move_keyframe", json!({"layer": "A", "path": "ks/r", "frame": 0, "to": 20})).contains("already"));
+    assert!(fail(&mut e, "get_property", json!({"layer": "A", "path": "../../etc"})).contains("path"));
+}
