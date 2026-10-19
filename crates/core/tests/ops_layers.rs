@@ -189,3 +189,16 @@ fn nudge_static_animated_and_parented() {
     assert_eq!(get(&mut e, "A", 0.0)[0], 100.0, "other keyframes untouched");
     assert_eq!(get(&mut e, "C", 0.0), json!([15.0, 8.0, 0.0]), "delta halved by the 200% parent");
 }
+
+#[test]
+fn paste_layers_assigns_new_ids_and_offsets() {
+    let mut e = eng();
+    ok(&mut e, "create_shape", json!({"type": "rect", "name": "A", "position": [100, 100]}));
+    let json_a = ok(&mut e, "inspect_layer", json!({"layer": "A"}))["json"].clone();
+    let r = ok(&mut e, "paste_layers", json!({"layers": [json_a.clone(), json_a], "offset": [10, 10]}));
+    let ids: Vec<String> = r["ids"].as_array().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect();
+    assert_eq!(ids, vec!["root:2", "root:3"]);
+    assert_eq!(anim(&e)["layers"].as_array().unwrap().len(), 3);
+    assert_eq!(layer(&e, 0)["ks"]["p"]["k"], json!([110.0, 110.0, 0.0]));
+    assert!(fail(&mut e, "paste_layers", json!({"layers": [{"nope": 1}]})).contains("layer"));
+}

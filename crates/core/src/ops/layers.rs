@@ -172,6 +172,13 @@ pub fn defs() -> Vec<ToolDef> {
             handler: distribute_layers,
         },
         ToolDef {
+            name: "paste_layers",
+            description: "Insert copies of layer JSON objects (e.g. from inspect_layer) on top of a scene, assigning fresh ids and optionally offsetting them. Parent/matte links inside the pasted set are preserved.",
+            schema: || obj(json!({"layers": {"type": "array", "items": {"type": "object"}, "minItems": 1}, "scene": {"type": "string"}, "offset": {"type": "array"}}), &["layers"]),
+            mutates: true,
+            handler: paste_layers,
+        },
+        ToolDef {
             name: "nudge_layers",
             description: "Move layers by a scene-space delta (dx, dy) like dragging on the canvas: static positions shift; animated positions get a keyframe at 'frame'. Parented layers are handled.",
             schema: || obj(json!({"layers": {"type": "array", "items": {"type": "string"}}, "dx": {"type": "number"}, "dy": {"type": "number"}, "frame": {"type": "number"}}), &["layers"]),
@@ -803,4 +810,65 @@ fn flip_layer(cx: &mut Cx, a: &Value) -> OpResult {
     }
     cx.set(&ptr, p)?;
     Ok(json!({"id": r.id}))
+}
+
+fn paste_layers(cx: &mut Cx, a: &Value) -> OpResult {
+    let src = a.get("layers").and_then(Value::as_array).ok_or_else(|| OpError("missing 'layers'".into()))?;
+    if src.iter().any(|l| l.get("ty").and_then(Value::as_i64).is_none()) {
+        return err("each pasted item must be a Lottie layer object with a numeric 'ty'");
+    }
+    let scene = scene_arg(a).to_string();
+    let lp = cx.comp_layers_ptr(&scene)?;
+    let existing: Vec<i64> = cx.get(&lp).and_then(Value::as_array).map(|v| v.iter().filter_map(ind_of).collect()).unwrap_or_default();
+    let mut next = cx.next_ind(&lp);
+    let mut map: Vec<(i64, i64)> = vec![];
+    let mut layers: Vec<Value> = src.clone();
+    for l in layers.iter_mut() {
+        let new = next;
+        next += 1;
+        if let Some(old) = ind_of(l) {
+            map.push((old, new));
+        }
+        l["ind"] = json!(new);
+    }
+    let remap = |old: i64| map.iter().find(|m| m.0 == old).map(|m| m.1);
+    for l in layers.iter_mut() {
+        let o = l.as_object_mut().unwrap();
+        if let Some(p) = o.get("parent").and_then(Value::as_i64) {
+            match remap(p) {
+                Some(n) => {
+                    o.insert("parent".into(), json!(n));
+                }
+                None if existing.contains(&p) => {}
+                None => {
+                    o.remove("parent");
+                }
+            }
+        }
+        if let Some(tp) = o.get("tp").and_then(Value::as_i64) {
+            match remap(tp) {
+                Some(n) => {
+                    o.insert("tp".into(), json!(n));
+                }
+                None => {
+                    o.remove("tp");
+                    o.remove("tt");
+                }
+            }
+        }
+    }
+    let mut ids = vec![];
+    for (i, l) in layers.into_iter().enumerate() {
+        ids.push(format!("{scene}:{}", l["ind"]));
+        cx.insert(&lp, i, l)?;
+    }
+    if let Some(off) = opt_vec(a, "offset").filter(|o| o.len() >= 2 && (o[0] != 0.0 || o[1] != 0.0)) {
+        for id in &ids {
+            let r = cx.layer(id)?;
+            if cx.layer_value(&r).get("parent").is_none() {
+                translate(cx, &r, off[0], off[1], 0.0)?;
+            }
+        }
+    }
+    Ok(json!({"ids": ids}))
 }
