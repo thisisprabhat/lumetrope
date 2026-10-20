@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { CanvasOverlay } from "./components/CanvasOverlay";
+import { ContextMenuHost } from "./components/ContextMenu";
 import { Stage } from "./components/Stage";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
@@ -40,6 +41,7 @@ export function App() {
         <Timeline />
       </section>
       <Toasts />
+      <ContextMenuHost />
     </div>
   );
 }

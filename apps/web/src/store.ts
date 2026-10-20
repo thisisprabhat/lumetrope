@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { engine, readInfo, type Info } from "./engine";
+import { centerCamera, fitCamera, nextStep, zoomAt, type Camera, type WheelMode } from "./lib/camera";
 import { clampFrame } from "./lib/time";
 
 export type Mode = "animate" | "state" | "preview";
@@ -21,7 +22,10 @@ interface EditorState {
   speed: number;
   mode: Mode;
   tool: Tool;
-  zoom: number;
+  /** screen = comp × camera.zoom + (camera.x, camera.y) in viewport pixels */
+  camera: Camera;
+  viewport: { w: number; h: number };
+  wheelMode: WheelMode;
   fileName: string;
   toasts: Toast[];
   selection: string[];
@@ -33,6 +37,8 @@ interface EditorState {
   canUndo: boolean;
   canRedo: boolean;
   fonts: string[];
+  renaming: string | null;
+  setRenaming: (id: string | null) => void;
   addFontName: (n: string) => void;
   select: (ids: string[], shape?: string | null) => void;
   setScene: (s: string) => void;
@@ -46,7 +52,13 @@ interface EditorState {
   setSpeed: (s: number) => void;
   setMode: (m: Mode) => void;
   setTool: (t: Tool) => void;
-  setZoom: (z: number) => void;
+  setCamera: (c: Camera) => void;
+  setViewport: (w: number, h: number) => void;
+  setWheelMode: (m: WheelMode) => void;
+  zoomStep: (dir: 1 | -1) => void;
+  zoomTo: (z: number) => void;
+  fitView: () => void;
+  fitBounds: (b: [number, number, number, number]) => void;
   setFileName: (n: string) => void;
   toast: (text: string, kind?: Toast["kind"]) => void;
   dismiss: (id: number) => void;
@@ -63,7 +75,9 @@ export const useEditor = create<EditorState>((set, get) => ({
   speed: 1,
   mode: "animate",
   tool: "select",
-  zoom: 1,
+  camera: { zoom: 1, x: 0, y: 0 },
+  viewport: { w: 0, h: 0 },
+  wheelMode: (localStorageGet("lumetrope.wheelMode") as WheelMode) || "auto",
   fileName: "Untitled",
   toasts: [],
   selection: [],
@@ -75,6 +89,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   canUndo: false,
   canRedo: false,
   fonts: [],
+  renaming: null,
+  setRenaming: (renaming) => set({ renaming }),
   addFontName: (n) => set({ fonts: Array.from(new Set([...get().fonts, n])) }),
   refresh: () => {
     const info = readInfo();
@@ -99,7 +115,31 @@ export const useEditor = create<EditorState>((set, get) => ({
   setSpeed: (speed) => set({ speed }),
   setMode: (mode) => set({ mode }),
   setTool: (tool) => set({ tool }),
-  setZoom: (zoom) => set({ zoom: Math.min(16, Math.max(0.05, zoom)) }),
+  setCamera: (camera) => set({ camera }),
+  setViewport: (w, h) => set({ viewport: { w, h } }),
+  setWheelMode: (wheelMode) => {
+    localStorageSet("lumetrope.wheelMode", wheelMode);
+    set({ wheelMode });
+  },
+  zoomStep: (dir) => {
+    const { camera, viewport } = get();
+    set({ camera: zoomAt(camera, nextStep(camera.zoom, dir) / camera.zoom, viewport.w / 2, viewport.h / 2) });
+  },
+  zoomTo: (z) => {
+    const { camera, viewport } = get();
+    set({ camera: zoomAt(camera, z / camera.zoom, viewport.w / 2, viewport.h / 2) });
+  },
+  fitView: () => {
+    const { info, viewport } = get();
+    if (info && viewport.w > 0) set({ camera: fitCamera(info.w, info.h, viewport.w, viewport.h) });
+  },
+  fitBounds: (b) => {
+    const { viewport } = get();
+    const w = Math.max(1, b[2] - b[0]);
+    const h = Math.max(1, b[3] - b[1]);
+    const c = fitCamera(w, h, viewport.w, viewport.h, 80);
+    set({ camera: { zoom: c.zoom, x: c.x - b[0] * c.zoom, y: c.y - b[1] * c.zoom } });
+  },
   setFileName: (fileName) => set({ fileName }),
   toast: (text, kind = "info") => {
     const id = ++toastId;
@@ -108,3 +148,21 @@ export const useEditor = create<EditorState>((set, get) => ({
   },
   dismiss: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),
 }));
+
+function localStorageGet(k: string): string | null {
+  try {
+    return localStorage.getItem(k);
+  } catch {
+    return null;
+  }
+}
+
+function localStorageSet(k: string, v: string): void {
+  try {
+    localStorage.setItem(k, v);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+export { centerCamera };

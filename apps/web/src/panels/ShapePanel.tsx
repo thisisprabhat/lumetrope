@@ -2,6 +2,8 @@ import { act } from "../actions";
 import { useLayerJson } from "../doc";
 import { useEditor } from "../store";
 import { Icon } from "../components/Icon";
+import { openContextMenu } from "../contextMenu";
+import { shapeItemMenu } from "../menus";
 import { ColorField, ColorRow, NumberField, PropRow, Section, Select, toHex } from "../ui/controls";
 
 export function itemAt(layer: any, path: string | null): any {
@@ -33,7 +35,14 @@ function ContentsTree({ id, items, prefix }: { id: string; items: any[]; prefix:
         const label = TYPE_LABEL[it.ty] === "Star" && it.sy === 2 ? "Polygon" : TYPE_LABEL[it.ty] ?? it.ty;
         return (
           <li key={path}>
-            <div className={`contents-row ${shape === path ? "sel" : ""} ${it.hd ? "hidden" : ""}`} onClick={() => select([id], path)}>
+            <div
+              className={`contents-row ${shape === path ? "sel" : ""} ${it.hd ? "hidden" : ""}`}
+              onClick={() => select([id], path)}
+              onContextMenu={(e) => {
+                select([id], path);
+                openContextMenu(e, shapeItemMenu(id, path, !!it.hd));
+              }}
+            >
               <span className={`shape-dot s-${it.ty}`} />
               <span className="contents-name">{it.nm || label}</span>
               <span className="muted tiny">{label}</span>

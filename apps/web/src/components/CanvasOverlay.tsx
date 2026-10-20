@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { act, beginGesture, endGesture, query } from "../actions";
 import { geometry, hitTest, type Geometry } from "../engine";
 import { useSceneInfo } from "../doc";
+import { openContextMenu } from "../contextMenu";
+import { canvasMenu, layerMenu } from "../menus";
 import { useEditor } from "../store";
 
 type Pt = [number, number];
@@ -316,6 +318,19 @@ export function CanvasOverlay({ zoom }: { zoom: number }) {
       onPointerUp={onPointerUp}
       onPointerLeave={() => setHover(null)}
       onDoubleClick={() => tool === "pen" && finishPen(false)}
+      onContextMenu={(e) => {
+        if (pen) {
+          e.preventDefault();
+          return finishPen(false);
+        }
+        const p = toComp(e);
+        let id = hitTest(p[0], p[1], f);
+        if (id && locked.has(id)) id = null;
+        if (!id) return openContextMenu(e, canvasMenu(p));
+        const ids = selection.includes(id) ? selection : [id];
+        if (!selection.includes(id)) select([id]);
+        openContextMenu(e, layerMenu(scene.layers.filter((l) => ids.includes(l.id))));
+      }}
     >
       {grid &&
         Array.from({ length: Math.floor(W / 50) + 1 }, (_, i) => <line key={`gx${i}`} x1={i * 50 * zoom} y1={0} x2={i * 50 * zoom} y2={H * zoom} className="grid-line" />).concat(

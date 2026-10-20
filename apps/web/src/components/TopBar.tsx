@@ -21,7 +21,7 @@ const MODES: { id: Mode; label: string }[] = [
 ];
 
 export function TopBar() {
-  const { tool, setTool, mode, setMode, fileName, zoom, setZoom, canUndo, canRedo, selection, snapping, setSnapping, grid, setGrid } = useEditor();
+  const { tool, setTool, mode, setMode, fileName, camera, zoomStep, zoomTo, canUndo, canRedo, selection, snapping, setSnapping, grid, setGrid, wheelMode, setWheelMode } = useEditor();
 
   return (
     <header className="topbar">
@@ -60,6 +60,10 @@ export function TopBar() {
           { label: "Zoom to fit", shortcut: "⌘0", onSelect: commands.fit },
           { label: "Snapping", checked: snapping, onSelect: () => setSnapping(!snapping) },
           { label: "Grid", checked: grid, onSelect: () => setGrid(!grid) },
+          { separator: true, label: "" },
+          { label: "Mouse wheel: auto-detect", checked: wheelMode === "auto", onSelect: () => setWheelMode("auto") },
+          { label: "Mouse wheel zooms", checked: wheelMode === "zoom", onSelect: () => setWheelMode("zoom") },
+          { label: "Mouse wheel scrolls", checked: wheelMode === "scroll", onSelect: () => setWheelMode("scroll") },
         ]}
       />
       <div className="sep" />
@@ -76,16 +80,24 @@ export function TopBar() {
         </button>
       ))}
       <div className="sep" />
-      <button className="icon-btn" data-tip="Zoom out" onClick={() => setZoom(zoom / 1.25)}>
+      <button className="icon-btn" data-tip="Zoom out (⌘−)" onClick={() => zoomStep(-1)}>
         <Icon name="zoomOut" />
       </button>
-      <span className="num" style={{ width: 44, textAlign: "center", color: "var(--text-1)" }}>
-        {Math.round(zoom * 100)}%
-      </span>
-      <button className="icon-btn" data-tip="Zoom in" onClick={() => setZoom(zoom * 1.25)}>
+      <Menu
+        trigger={<span className="num zoom-readout">{camera.zoom < 0.1 ? (camera.zoom * 100).toFixed(1) : Math.round(camera.zoom * 100)}%</span>}
+        items={[
+          { label: "Zoom in", shortcut: "⌘+", onSelect: () => zoomStep(1) },
+          { label: "Zoom out", shortcut: "⌘−", onSelect: () => zoomStep(-1) },
+          { label: "Zoom to fit", shortcut: "⇧1", onSelect: commands.fit },
+          { label: "Zoom to selection", shortcut: "⇧2", onSelect: commands.zoomToSelection, disabled: !selection.length },
+          { separator: true, label: "" },
+          ...[0.5, 1, 2, 4, 8].map((z) => ({ label: `${z * 100}%`, shortcut: z === 1 ? "⇧0" : undefined, onSelect: () => zoomTo(z), checked: Math.abs(camera.zoom - z) < 1e-3 })),
+        ]}
+      />
+      <button className="icon-btn" data-tip="Zoom in (⌘+)" onClick={() => zoomStep(1)}>
         <Icon name="zoomIn" />
       </button>
-      <button className="icon-btn" data-tip="Zoom to fit (⌘0)" onClick={() => window.dispatchEvent(new Event("lumetrope:fit"))}>
+      <button className="icon-btn" data-tip="Zoom to fit (⇧1)" onClick={commands.fit}>
         <Icon name="fit" />
       </button>
       <div className="spacer" />

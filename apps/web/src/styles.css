@@ -1775,3 +1775,42 @@ textarea {
   border-color: var(--lume);
   color: var(--lume);
 }
+
+.view-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.overlay-host {
+  position: absolute;
+}
+
+.zoom-readout {
+  display: inline-block;
+  min-width: 46px;
+  text-align: center;
+  color: var(--text-1);
+}
+
+.ctx-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 200px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  animation: rise 0.1s ease-out;
+}
+
+.ctx-menu .menu-item.active:not(:disabled) {
+  background: var(--lume-wash);
+  color: var(--lume);
+}
+
+.menu-item.danger {
+  color: var(--danger);
+}

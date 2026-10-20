@@ -3,6 +3,8 @@ import { act, beginGesture, endGesture } from "../actions";
 import { useProp } from "../doc";
 import { useEditor } from "../store";
 import { Icon } from "../components/Icon";
+import { openContextMenu } from "../contextMenu";
+import { propertyMenu } from "../menus";
 
 const fmt = (v: number, precision: number) => {
   if (!Number.isFinite(v)) return "0";
@@ -235,7 +237,7 @@ export function PropRow({
     writeProp(layer, property, dims === 1 ? next[0] : next, shape);
   };
   return (
-    <div className={`prow ${st.animated ? "is-animated" : ""}`}>
+    <div className={`prow ${st.animated ? "is-animated" : ""}`} onContextMenu={(e) => openContextMenu(e, propertyMenu(layer, property, shape, st))}>
       <span className="prow-label">
         {label}
         {st.slot && <span className="slot-tag" title={`Bound to slot ${st.slot}`}>◆ {st.slot}</span>}
@@ -255,7 +257,7 @@ export function ColorRow({ layer, property, shape, label }: { layer: string; pro
   if (!st.exists) return null;
   const hex = toHex(st.value);
   return (
-    <div className={`prow ${st.animated ? "is-animated" : ""}`}>
+    <div className={`prow ${st.animated ? "is-animated" : ""}`} onContextMenu={(e) => openContextMenu(e, propertyMenu(layer, property, shape, { ...st, value: hex }))}>
       <span className="prow-label">
         {label}
         {st.slot && <span className="slot-tag">◆ {st.slot}</span>}

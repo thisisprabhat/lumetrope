@@ -7,6 +7,8 @@ import { useEditor, type LeftTab } from "../store";
 import { Icon } from "../components/Icon";
 import { ColorField, NumberField } from "../ui/controls";
 import { HistoryPanel } from "./HistoryPanel";
+import { openContextMenu } from "../contextMenu";
+import { layerMenu } from "../menus";
 
 const TABS: { id: LeftTab; icon: string; tip: string }[] = [
   { id: "layers", icon: "layers", tip: "Layers" },
@@ -53,9 +55,11 @@ function PanelHead({ title, children }: { title: string; children?: React.ReactN
 }
 
 function LayerRow({ l, index }: { l: LayerNode; index: number }) {
-  const { selection, select, setScene } = useEditor();
+  const { selection, select, setScene, renaming: renamingId, setRenaming: setRenamingId } = useEditor();
   const [drop, setDrop] = useState<"above" | "below" | null>(null);
-  const [renaming, setRenaming] = useState(false);
+  const renaming = renamingId === l.id;
+  const setRenaming = (on: boolean) => setRenamingId(on ? l.id : null);
+  const layers = useSceneInfo().layers;
   const sel = selection.includes(l.id);
   return (
     <div
@@ -79,6 +83,11 @@ function LayerRow({ l, index }: { l: LayerNode; index: number }) {
         else select([l.id]);
       }}
       onDoubleClick={() => (l.type === "precomp" && l.scene ? setScene(l.scene) : setRenaming(true))}
+      onContextMenu={(e) => {
+        const ids = sel ? selection : [l.id];
+        if (!sel) select([l.id]);
+        openContextMenu(e, layerMenu(layers.filter((x) => ids.includes(x.id))));
+      }}
     >
       <Icon name={TYPE_ICON[l.type] ?? "more"} size={13} />
       {renaming ? (

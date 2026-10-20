@@ -22,16 +22,23 @@ export function useShortcuts(): void {
       }
       if (mod && k === "y") return (e.preventDefault(), commands.redo());
       if (mod && k === "d") return (e.preventDefault(), commands.duplicate());
+      if (mod && k === "c") return (e.preventDefault(), commands.copy());
+      if (mod && k === "x") return (e.preventDefault(), commands.cut());
+      if (mod && k === "v") return (e.preventDefault(), void commands.paste());
       if (mod && k === "a") return (e.preventDefault(), commands.selectAll());
       if (mod && k === "o") return (e.preventDefault(), void commands.open());
       if (mod && k === "s") return (e.preventDefault(), commands.saveProjectJson());
       if (mod && k === "e") return (e.preventDefault(), commands.exportJson());
       if (mod && k === "g") return (e.preventDefault(), commands.precompose());
       if (mod && k === "0") return (e.preventDefault(), commands.fit());
+      if (mod && (k === "=" || k === "+")) return (e.preventDefault(), st.zoomStep(1));
+      if (mod && k === "-") return (e.preventDefault(), st.zoomStep(-1));
       if (mod) return;
       if (e.key === "Delete" || e.key === "Backspace") return (e.preventDefault(), commands.remove());
       if (e.key === "Escape") return st.select([]);
-      if (e.key === " ") return (e.preventDefault(), st.setPlaying(!st.playing));
+      if (e.shiftKey && e.code === "Digit1") return commands.fit();
+      if (e.shiftKey && e.code === "Digit0") return st.zoomTo(1);
+      if (e.shiftKey && e.code === "Digit2") return commands.zoomToSelection();
       if (e.key === ",") return st.setFrame(st.frame - (e.shiftKey ? 10 : 1));
       if (e.key === ".") return st.setFrame(st.frame + (e.shiftKey ? 10 : 1));
       if (e.key === "Home") return st.setFrame(st.info?.ip ?? 0);

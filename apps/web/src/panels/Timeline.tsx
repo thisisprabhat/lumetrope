@@ -5,6 +5,8 @@ import { formatTime } from "../lib/time";
 import { useEditor } from "../store";
 import { Icon } from "../components/Icon";
 import { EasingEditor } from "./EasingEditor";
+import { openContextMenu } from "../contextMenu";
+import { keyframeMenu, layerMenu, timelineMenu } from "../menus";
 import { itemAt } from "./ShapePanel";
 
 interface KfInfo {
@@ -159,6 +161,15 @@ export function Timeline() {
                 setEasing({ sel: { layer, path, frame: k.frame }, x: r.left, y: r.top, value: k.easing });
               }
         }
+        onContextMenu={
+          summary
+            ? undefined
+            : (e) => {
+                const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                setKfSel({ layer, path, frame: k.frame });
+                openContextMenu(e, keyframeMenu(layer, path, k.frame, () => setEasing({ sel: { layer, path, frame: k.frame }, x: r.left, y: r.top, value: k.easing })));
+              }
+        }
       />
     );
   };
@@ -212,7 +223,15 @@ export function Timeline() {
               const open = expanded[l.id];
               return (
                 <div key={l.id}>
-                  <div className={`tl-name ${selection.includes(l.id) ? "sel" : ""} ${l.hidden ? "hidden" : ""}`} onClick={() => select([l.id])}>
+                  <div
+                    className={`tl-name ${selection.includes(l.id) ? "sel" : ""} ${l.hidden ? "hidden" : ""}`}
+                    onClick={() => select([l.id])}
+                    onContextMenu={(e) => {
+                      if (!selection.includes(l.id)) select([l.id]);
+                      const ids = selection.includes(l.id) ? selection : [l.id];
+                      openContextMenu(e, layerMenu(scene.layers.filter((x) => ids.includes(x.id))));
+                    }}
+                  >
                     <button className="tl-caret" disabled={t.length === 0} onClick={(e) => {
                       e.stopPropagation();
                       setExpanded({ ...expanded, [l.id]: !open });
@@ -234,7 +253,7 @@ export function Timeline() {
           </div>
           <div className="tl-tracks" ref={trackRef}>
             <div style={{ width: inner + 16, position: "relative", minHeight: "100%" }}>
-              <div className="tl-ruler" onPointerDown={scrub}>
+              <div className="tl-ruler" onPointerDown={(e) => e.button === 0 && scrub(e)} onContextMenu={(e) => openContextMenu(e, timelineMenu(frameFromEvent(e.clientX)))}>
                 {ticks.map((f) => (
                   <span key={f} className="tick" style={{ left: fx(f) + 8 }}>
                     <span className="num">{step >= fps && f % fps === 0 ? `${f / fps}s` : f}</span>
@@ -255,7 +274,19 @@ export function Timeline() {
                 const all = Array.from(new Set(t.flatMap((x) => x.keyframes.map((k) => k.frame)))).map((f) => ({ frame: f, value: null, easing: null }) as KfInfo);
                 return (
                   <div key={l.id}>
-                    <div className={`tl-row ${selection.includes(l.id) ? "sel" : ""}`} onPointerDown={() => select([l.id])}>
+                    <div
+                      className={`tl-row ${selection.includes(l.id) ? "sel" : ""}`}
+                      onPointerDown={(e) => e.button === 0 && select([l.id])}
+                      onContextMenu={(e) => {
+                        if (!selection.includes(l.id)) select([l.id]);
+                        const ids = selection.includes(l.id) ? selection : [l.id];
+                        openContextMenu(e, [
+                          { label: "Move playhead here", onSelect: () => setFrame(frameFromEvent(e.clientX)) },
+                          { label: "", separator: true },
+                          ...layerMenu(scene.layers.filter((x) => ids.includes(x.id))),
+                        ]);
+                      }}
+                    >
                       <div className="tl-row-inner">
                         {layerBar(l)}
                         {all.map((k) => diamond(l.id, "*", k, true))}
