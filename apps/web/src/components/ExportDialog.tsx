@@ -43,13 +43,11 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
     const t0 = performance.now();
     const gpu = new CanvasRenderer();
     gpu.setImages(JSON.parse(engine().image_assets()));
-    const z = (w / info.w);
+    const z = w / info.w;
     const loop = (now: number) => {
       const f = info.ip + ((((now - t0) / 1000) * info.fr) % Math.max(1, info.op - info.ip));
       gpu.render(ctx, JSON.parse(engine().display_list(f, z, 0, 0)), w, h, [0, 0, w, h]);
       raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
