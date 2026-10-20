@@ -131,6 +131,35 @@ impl Engine {
         serde_json::to_string(&self.inner.fonts().names()).unwrap_or_default()
     }
 
+    /// Start previewing a state machine; returns the snapshot JSON.
+    pub fn sm_start(&mut self, id: &str) -> Result<String, JsValue> {
+        self.inner.sm_start(id).map(|v| v.to_string()).map_err(err)
+    }
+
+    pub fn sm_stop(&mut self) {
+        self.inner.sm_stop();
+    }
+
+    /// Advance the running machine by `dt` seconds; returns snapshot + events JSON.
+    pub fn sm_tick(&mut self, dt: f64) -> String {
+        self.inner.sm_tick(dt).to_string()
+    }
+
+    /// Pointer event ("down" | "up" | "move" | "enter" | "exit" | "click") at a composition point.
+    pub fn sm_pointer(&mut self, kind: &str, x: f64, y: f64) -> String {
+        self.inner.sm_pointer(kind, x, y).to_string()
+    }
+
+    /// Set an input (JSON value) or fire an event (null).
+    pub fn sm_set_input(&mut self, name: &str, value_json: &str) -> String {
+        let v: serde_json::Value = serde_json::from_str(value_json).unwrap_or(serde_json::Value::Null);
+        self.inner.sm_set_input(name, &v).to_string()
+    }
+
+    pub fn sm_snapshot(&mut self) -> String {
+        self.inner.sm_snapshot().to_string()
+    }
+
     pub fn revision(&self) -> f64 {
         self.inner.revision() as f64
     }

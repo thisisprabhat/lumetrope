@@ -413,6 +413,10 @@ fn add_state(cx: &mut Cx, a: &Value) -> OpResult {
         json!({"name": name, "type": "PlaybackState", "animation": "", "transitions": []})
     };
     apply_state_fields(&mut s, a)?;
+    // New playback states play by default (as LottieFiles Creator authors them).
+    if !global && a.get("autoplay").is_none() {
+        s["autoplay"] = json!(true);
+    }
     cx.insert(&format!("{mp}/states"), states.len(), s)?;
     if !global && cx.get(&format!("{mp}/initial")).and_then(Value::as_str).map(str::is_empty).unwrap_or(true) {
         cx.set(&format!("{mp}/initial"), json!(name))?;

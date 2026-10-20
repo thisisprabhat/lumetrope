@@ -17,6 +17,10 @@ pub struct Engine {
     hist: History,
     /// Composition shown on the canvas: "root" or a precomp asset id.
     view: String,
+    /// Running state machine preview, if any.
+    sm: Option<crate::sm::Machine>,
+    /// Theme set by a running state machine (overrides the preview theme).
+    runtime_theme: Option<String>,
 }
 
 impl Default for Engine {
@@ -35,6 +39,8 @@ impl Engine {
             images_rev: 0,
             hist: History::default(),
             view: "root".into(),
+            sm: None,
+            runtime_theme: None,
         }
     }
 
@@ -59,6 +65,8 @@ impl Engine {
 
     fn replace_project(&mut self, p: Value) {
         self.view = "root".into();
+        self.sm = None;
+        self.runtime_theme = None;
         self.project = p;
         self.ctx.images.clear();
         self.register_project_fonts();
@@ -157,7 +165,8 @@ impl Engine {
     pub fn animation(&mut self) -> &Animation {
         if self.cache.as_ref().map(|c| c.0) != Some(self.revision) {
             let mut src = project::active_anim(&self.project).clone();
-            let theme = self.project.pointer("/settings/preview_theme").and_then(Value::as_str).and_then(|t| self.project.get("themes").and_then(|th| th.get(t))).cloned();
+            let theme_id = self.runtime_theme.clone().or_else(|| self.project.pointer("/settings/preview_theme").and_then(Value::as_str).map(str::to_string));
+            let theme = theme_id.and_then(|t| self.project.get("themes").and_then(|th| th.get(&t)).cloned());
             crate::dotlottie::apply_theme(&mut src, theme.as_ref(), &project::active_id(&self.project));
             let a = model::parse(&src).unwrap_or_default();
             self.cache = Some((self.revision, a));
@@ -231,6 +240,76 @@ impl Engine {
         let mut out = pm.take();
         unpremultiply(&mut out);
         out
+    }
+
+    // ------------------------------------------------------- state machines
+
+    fn sm_report(&mut self, events: Vec<crate::sm::SmEvent>) -> Value {
+        for e in &events {
+            if let crate::sm::SmEvent::SetTheme(t) = e {
+                self.runtime_theme = if t.is_empty() { None } else { Some(t.clone()) };
+                self.cache = None;
+            }
+        }
+        let Some(m) = &self.sm else { return Value::Null };
+        let s = m.snapshot();
+        let inputs: serde_json::Map<String, Value> = s.inputs.iter().map(|(n, v)| (n.clone(), v.to_json())).collect();
+        json!({"state": s.state, "frame": s.frame, "playing": s.playing, "tweening": s.tweening, "stopped": s.stopped,
+            "inputs": inputs, "theme": self.runtime_theme, "events": events.iter().map(|e| e.to_json()).collect::<Vec<_>>()})
+    }
+
+    /// Start previewing state machine `id` on the root animation.
+    pub fn sm_start(&mut self, id: &str) -> Result<Value, String> {
+        let def = self.project.get("stateMachines").and_then(|m| m.get(id)).cloned().ok_or_else(|| format!("no state machine '{id}'"))?;
+        self.view = "root".into();
+        self.runtime_theme = None;
+        self.cache = None;
+        let anim = self.animation().clone();
+        let mut m = crate::sm::Machine::new(&def, &anim)?;
+        let ev = m.start();
+        self.sm = Some(m);
+        Ok(self.sm_report(ev))
+    }
+
+    pub fn sm_stop(&mut self) {
+        self.sm = None;
+        if self.runtime_theme.take().is_some() {
+            self.cache = None;
+        }
+    }
+
+    pub fn sm_tick(&mut self, dt: f64) -> Value {
+        let ev = match self.sm.as_mut() {
+            Some(m) => m.tick(dt),
+            None => return Value::Null,
+        };
+        self.sm_report(ev)
+    }
+
+    /// Route a pointer event at composition point (x, y) to the running machine.
+    pub fn sm_pointer(&mut self, kind: &str, x: f64, y: f64) -> Value {
+        let Some(k) = crate::sm::PointerKind::parse(kind) else { return json!({"error": format!("unknown pointer kind '{kind}'")}) };
+        let Some(frame) = self.sm.as_ref().map(|m| m.snapshot().frame) else { return Value::Null };
+        let anim = self.animation().clone();
+        let hits = crate::hit::layers_named_at(&anim, &self.ctx.fonts, frame, x, y);
+        let ev = self.sm.as_mut().unwrap().pointer(k, &hits);
+        self.sm_report(ev)
+    }
+
+    /// Set an input (JSON bool/number/string) or fire an event input (null).
+    pub fn sm_set_input(&mut self, name: &str, value: &Value) -> Value {
+        let Some(m) = self.sm.as_mut() else { return Value::Null };
+        let ev = match value {
+            Value::Bool(b) => m.set_input(name, crate::sm::InputValue::Bool(*b)),
+            Value::Number(n) => m.set_input(name, crate::sm::InputValue::Num(n.as_f64().unwrap_or(0.0))),
+            Value::String(s) => m.set_input(name, crate::sm::InputValue::Str(s.clone())),
+            _ => m.fire(name),
+        };
+        self.sm_report(ev)
+    }
+
+    pub fn sm_snapshot(&mut self) -> Value {
+        self.sm_report(vec![])
     }
 
     /// GPU display list (JSON) through a camera: screen = comp × scale + (tx, ty).

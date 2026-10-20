@@ -1,6 +1,6 @@
 use lumetrope_core::engine::Engine;
 use lumetrope_core::project;
-use serde_json::json;
+use serde_json::{json, Value};
 
 fn lottie() -> serde_json::Value {
     json!({"v":"5.12.0","fr":24,"ip":0,"op":48,"w":64,"h":32,"nm":"x","layers":[
@@ -156,4 +156,39 @@ fn render_view_maps_camera_and_clips_to_artboard() {
     assert_eq!(at(10 + 64, 5 + 32)[0], 255, "comp centre (32,16) → screen (74,37)");
     assert_eq!(at(5, 2)[3], 0, "outside the artboard is transparent");
     assert_eq!(at(10 + 128 + 3, 20)[3], 0, "right of the artboard is clipped");
+}
+
+#[test]
+fn engine_state_machine_preview_session() {
+    let mut e = Engine::new();
+    e.new_project(100.0, 100.0, 30.0, 60.0);
+    e.apply("create_shape", &json!({"type": "rect", "name": "Button", "position": [50, 50], "size": [40, 40], "fill": "#ff0000"}));
+    e.apply("create_slot", &json!({"layer": "Button", "shape": "1", "property": "color", "slot_id": "c"}));
+    e.apply("add_theme", &json!({"id": "blue"}));
+    e.apply("update_theme_rule", &json!({"theme": "blue", "slot_id": "c", "value": "#0000ff"}));
+    e.apply("add_segment", &json!({"name": "idle", "start": 0, "end": 10}));
+    e.apply("add_segment", &json!({"name": "pressed", "start": 20, "end": 30}));
+    e.apply("add_state_machine", &json!({"id": "m"}));
+    e.apply("add_input", &json!({"machine": "m", "name": "go", "type": "event"}));
+    e.apply("add_state", &json!({"machine": "m", "name": "Idle", "segment": "idle", "loop": true, "autoplay": true}));
+    e.apply("add_state", &json!({"machine": "m", "name": "Pressed", "segment": "pressed", "entry_actions": [{"type": "set_theme", "value": "blue"}]}));
+    e.apply("add_transition", &json!({"machine": "m", "from": "Idle", "to": "Pressed", "guards": [{"input": "go"}]}));
+    e.apply("add_interaction", &json!({"machine": "m", "type": "Click", "layer": "Button", "actions": [{"type": "fire", "input": "go"}]}));
+    let s = e.sm_start("m").unwrap();
+    assert_eq!(s["state"], "Idle");
+    assert!(e.sm_start("nope").is_err());
+    let miss = e.sm_pointer("click", 5.0, 5.0);
+    assert_eq!(miss["state"], "Idle", "click outside the button does nothing");
+    let hit = e.sm_pointer("click", 50.0, 50.0);
+    assert_eq!(hit["state"], "Pressed");
+    assert!(hit["events"].as_array().unwrap().iter().any(|ev| ev["type"] == "SetTheme"));
+    assert_eq!(hit["frame"], 20.0);
+    let px = e.render_rgba(20.0, 100, 100);
+    assert_eq!(&px[(50 * 100 + 50) * 4..(50 * 100 + 50) * 4 + 3], &[0, 0, 255], "SetTheme recolours the preview");
+    let t = e.sm_tick(0.1);
+    assert!((t["frame"].as_f64().unwrap() - 23.0).abs() < 1e-6);
+    let i = e.sm_set_input("go", &json!(null));
+    assert_eq!(i["inputs"]["go"], Value::Null);
+    e.sm_stop();
+    assert_eq!(&e.render_rgba(20.0, 100, 100)[(50 * 100 + 50) * 4..(50 * 100 + 50) * 4 + 3], &[255, 0, 0], "stopping clears the runtime theme");
 }
