@@ -38,6 +38,8 @@ interface EditorState {
   canRedo: boolean;
   fonts: string[];
   renaming: string | null;
+  exportOpen: boolean;
+  setExportOpen: (b: boolean) => void;
   setRenaming: (id: string | null) => void;
   addFontName: (n: string) => void;
   select: (ids: string[], shape?: string | null) => void;
@@ -90,6 +92,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   canRedo: false,
   fonts: [],
   renaming: null,
+  exportOpen: false,
+  setExportOpen: (exportOpen) => set({ exportOpen }),
   setRenaming: (renaming) => set({ renaming }),
   addFontName: (n) => set({ fonts: Array.from(new Set([...get().fonts, n])) }),
   refresh: () => {

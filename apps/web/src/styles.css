@@ -1814,3 +1814,101 @@ textarea {
 .menu-item.danger {
   color: var(--danger);
 }
+
+/* ---------------------------------------------------------------- modal */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 6, 8, 0.6);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  z-index: 150;
+  animation: rise 0.15s ease-out;
+}
+
+.modal {
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px 10px 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.export-preview {
+  display: grid;
+  place-items: center;
+  height: 230px;
+  background-color: #2a2d31;
+  background-image:
+    linear-gradient(45deg, #34383d 25%, transparent 25%),
+    linear-gradient(-45deg, #34383d 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #34383d 75%),
+    linear-gradient(-45deg, transparent 75%, #34383d 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.format-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.format-card {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-1);
+}
+
+.format-card span {
+  color: var(--text-2);
+  font-size: 11px;
+}
+
+.format-card.on {
+  border-color: var(--lume);
+  box-shadow: inset 0 0 0 1px var(--lume);
+}
+
+.warn {
+  color: var(--lume);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+}

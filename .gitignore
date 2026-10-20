@@ -8,3 +8,4 @@ pkg/
 .superpowers/
 apps/web/tsconfig.tsbuildinfo
 samples/lottiefiles/
+apps/web/public/samples/lottiefiles

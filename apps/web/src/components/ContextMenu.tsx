@@ -112,7 +112,7 @@ export function ContextMenuHost() {
         { label: "Zoom to fit", shortcut: "⇧1", onSelect: commands.fit },
         SEP,
         { label: "Import…", onSelect: () => void commands.import() },
-        { label: "Export Lottie JSON", shortcut: "⌘E", onSelect: commands.exportJson },
+        { label: "Export…", shortcut: "⌘E", onSelect: commands.openExport },
       ]);
     };
     window.addEventListener("contextmenu", onCtx);

@@ -1,5 +1,6 @@
 import { act } from "../actions";
-import { projectValue } from "../engine";
+import { engine, projectValue } from "../engine";
+import { formatBytes } from "../lib/export";
 import { useSceneInfo } from "../doc";
 import { useEditor } from "../store";
 import { ColorField, NumberField, Section, Select } from "../ui/controls";
@@ -88,10 +89,45 @@ export function ScenePanel() {
         </div>
       </Section>
       <Section title="File info" defaultOpen={false}>
-        <div className="muted tiny">
-          {s.layers.length} layers · {s.scenes.length - 1} nested scenes · {s.segments.length} segments
-        </div>
+        <FileInfo />
       </Section>
+    </>
+  );
+}
+
+function FileInfo() {
+  const revision = useEditor((st) => st.revision);
+  const s = useSceneInfo();
+  const d = useMemo(() => {
+    const p = projectValue();
+    const a = p.animations[p.active] ?? {};
+    const json = engine().export_lottie();
+    return {
+      size: json.length,
+      version: a.v ?? "—",
+      generator: a.meta?.g ?? "—",
+      machines: Object.keys(p.stateMachines ?? {}).length,
+      themes: Object.keys(p.themes ?? {}).length,
+      images: (a.assets ?? []).filter((x: any) => !x.layers && x.p).length,
+    };
+  }, [revision]);
+  const row = (k: string, v: string | number) => (
+    <div className="info-row">
+      <span className="muted">{k}</span>
+      <span className="num">{v}</span>
+    </div>
+  );
+  return (
+    <>
+      {row("Lottie JSON size", formatBytes(d.size))}
+      {row("Bodymovin version", d.version)}
+      {row("Generator", d.generator)}
+      {row("Layers", s.layers.length)}
+      {row("Nested scenes", Math.max(0, s.scenes.length - 1))}
+      {row("Segments", s.segments.length)}
+      {row("Images", d.images)}
+      {row("State machines", d.machines)}
+      {row("Themes", d.themes)}
     </>
   );
 }

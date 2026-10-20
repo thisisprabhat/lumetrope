@@ -4,6 +4,7 @@ import { engine, geometry, type Geometry } from "./engine";
 import { download, openFile, pickFile } from "./files";
 import { importFile } from "./panels/LeftSidebar";
 import { useEditor } from "./store";
+import { exportFileName } from "./lib/export";
 
 const st = () => useEditor.getState();
 
@@ -81,9 +82,17 @@ export const commands = {
     download(`${st().fileName || "animation"}.json`, engine().export_lottie(), "application/json");
     st().toast("Exported Lottie JSON");
   },
-  saveProjectJson() {
-    download(`${st().fileName || "project"}.lumetrope.json`, engine().project_json(), "application/json");
-    st().toast("Saved project");
+  /** Save the whole project as a dotLottie file (the native project format). */
+  saveProject() {
+    try {
+      download(exportFileName(st().fileName || "project", "lottie"), engine().export_dotlottie(), "application/zip+dotlottie");
+      st().toast("Saved project (.lottie)");
+    } catch (e) {
+      st().toast(String(e), "error");
+    }
+  },
+  openExport() {
+    st().setExportOpen(true);
   },
   undo,
   redo,

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { CanvasOverlay } from "./components/CanvasOverlay";
 import { ContextMenuHost } from "./components/ContextMenu";
+import { ExportDialog } from "./components/ExportDialog";
 import { Stage } from "./components/Stage";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
@@ -17,6 +18,8 @@ let openedFromUrl = false;
 export function App() {
   const refresh = useEditor((s) => s.refresh);
   const mode = useEditor((s) => s.mode);
+  const exportOpen = useEditor((s) => s.exportOpen);
+  const setExportOpen = useEditor((s) => s.setExportOpen);
   useEffect(() => {
     refresh();
     const open = new URLSearchParams(location.search).get("open");
@@ -42,6 +45,7 @@ export function App() {
       </section>
       <Toasts />
       <ContextMenuHost />
+      {exportOpen && <ExportDialog onClose={() => setExportOpen(false)} />}
     </div>
   );
 }

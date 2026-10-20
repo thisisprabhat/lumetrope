@@ -38,8 +38,9 @@ export function TopBar() {
           { label: "Open…", shortcut: "⌘O", onSelect: () => void commands.open() },
           { label: "Import SVG, Lottie, image or font…", onSelect: () => void commands.import() },
           { separator: true, label: "" },
-          { label: "Save project", shortcut: "⌘S", onSelect: commands.saveProjectJson },
-          { label: "Export Lottie JSON", shortcut: "⌘E", onSelect: commands.exportJson },
+          { label: "Save project", shortcut: "⌘S", onSelect: commands.saveProject },
+          { label: "Export…", shortcut: "⌘E", onSelect: commands.openExport },
+          { label: "Quick export Lottie JSON", onSelect: commands.exportJson },
         ]}
       />
       <Menu
@@ -111,7 +112,7 @@ export function TopBar() {
         ))}
       </div>
       <div className="sep" />
-      <button className="btn primary" onClick={commands.exportJson}>
+      <button className="btn primary" onClick={commands.openExport}>
         <Icon name="export" size={14} /> Export
       </button>
     </header>
