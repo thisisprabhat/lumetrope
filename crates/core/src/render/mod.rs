@@ -2,6 +2,7 @@
 
 pub mod effects;
 pub mod layers;
+pub mod list;
 pub mod paint;
 pub mod shapes;
 
@@ -131,3 +132,10 @@ pub fn draw_comp(canvas: &mut Pixmap, anim: &Animation, layers: &[Layer], ctx: &
     }
 }
 
+
+/// Parse a `#rrggbb` solid-layer colour to 0..1 RGB.
+pub fn layers_hex(s: &str) -> [f32; 3] {
+    let h = s.trim_start_matches('#');
+    let g = |i: usize| u8::from_str_radix(h.get(i..i + 2).unwrap_or("00"), 16).unwrap_or(0) as f32 / 255.0;
+    [g(0), g(2), g(4)]
+}

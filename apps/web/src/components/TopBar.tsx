@@ -21,7 +21,7 @@ const MODES: { id: Mode; label: string }[] = [
 ];
 
 export function TopBar() {
-  const { tool, setTool, mode, setMode, fileName, camera, zoomStep, zoomTo, canUndo, canRedo, selection, snapping, setSnapping, grid, setGrid, wheelMode, setWheelMode } = useEditor();
+  const { tool, setTool, mode, setMode, fileName, camera, zoomStep, zoomTo, canUndo, canRedo, selection, snapping, setSnapping, grid, setGrid, wheelMode, setWheelMode, renderer, setRenderer } = useEditor();
 
   return (
     <header className="topbar">
@@ -65,6 +65,9 @@ export function TopBar() {
           { label: "Mouse wheel: auto-detect", checked: wheelMode === "auto", onSelect: () => setWheelMode("auto") },
           { label: "Mouse wheel zooms", checked: wheelMode === "zoom", onSelect: () => setWheelMode("zoom") },
           { label: "Mouse wheel scrolls", checked: wheelMode === "scroll", onSelect: () => setWheelMode("scroll") },
+          { separator: true, label: "" },
+          { label: "Renderer: GPU (Canvas2D)", checked: renderer === "gpu", onSelect: () => setRenderer("gpu") },
+          { label: "Renderer: CPU (tiny-skia)", checked: renderer === "cpu", onSelect: () => setRenderer("cpu") },
         ]}
       />
       <div className="sep" />

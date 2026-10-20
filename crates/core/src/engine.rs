@@ -233,6 +233,25 @@ impl Engine {
         out
     }
 
+    /// GPU display list (JSON) through a camera: screen = comp × scale + (tx, ty).
+    pub fn display_list(&mut self, frame: f64, scale: f64, tx: f64, ty: f64) -> String {
+        let anim = self.view_animation();
+        let base = crate::geom::Affine { a: scale, b: 0.0, c: 0.0, d: scale, e: tx, f: ty };
+        crate::render::list::record(&anim, &self.ctx.fonts, frame, &base).to_string()
+    }
+
+    /// `{asset id: data URI}` for every embedded image of the viewed animation.
+    pub fn image_assets(&mut self) -> Value {
+        let anim = self.view_animation();
+        let mut out = serde_json::Map::new();
+        for a in &anim.assets {
+            if a.layers.is_none() && a.p.starts_with("data:") {
+                out.insert(a.id.clone(), json!(a.p));
+            }
+        }
+        Value::Object(out)
+    }
+
     /// The active animation as clean Lottie JSON (editor metadata stripped).
     pub fn export_lottie(&self) -> String {
         let mut a = project::active_anim(&self.project).clone();

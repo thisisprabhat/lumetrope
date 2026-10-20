@@ -20,7 +20,7 @@ pub enum ModSpec {
     Round(f64),
 }
 
-fn mod_of(item: &Shape, t: f64) -> Option<ModSpec> {
+pub(crate) fn mod_of(item: &Shape, t: f64) -> Option<ModSpec> {
     match item {
         Shape::Trim(x) if !x.c.hd => Some(ModSpec::Trim {
             s: eval1(x.s.as_ref(), t, 0.0),
@@ -96,7 +96,7 @@ pub fn group_transform(items: &[Shape], t: f64) -> (Affine, f32) {
     }
 }
 
-fn repeater_copy(r: &Repeater, t: f64, i: f64) -> (Affine, f32, usize) {
+pub(crate) fn repeater_copy(r: &Repeater, t: f64, i: f64) -> (Affine, f32, usize) {
     let tr: &Transform = &r.tr;
     let a = eval_or(tr.a.as_ref(), t, &[0.0, 0.0]);
     let p = eval_or(tr.p.as_ref(), t, &[0.0, 0.0]);

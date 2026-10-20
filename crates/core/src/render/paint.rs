@@ -31,7 +31,7 @@ pub fn solid_paint(c: [f32; 3], alpha: f32) -> Paint<'static> {
     p
 }
 
-fn merged_stops(g: &Gradient, t: f64, alpha: f32) -> Vec<(f32, Color)> {
+pub(crate) fn merged_stops(g: &Gradient, t: f64, alpha: f32) -> Vec<(f32, Color)> {
     let raw = eval_or(g.colors.as_ref(), t, &[]);
     let n = g.count.min(raw.len() / 4);
     let colors: Vec<(f64, [f64; 3])> = (0..n).map(|i| (raw[i * 4], [raw[i * 4 + 1], raw[i * 4 + 2], raw[i * 4 + 3]])).collect();

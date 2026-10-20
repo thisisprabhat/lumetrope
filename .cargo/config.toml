@@ -1,0 +1,3 @@
+# WebAssembly SIMD speeds up tiny-skia rasterisation (all target browsers support it).
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]

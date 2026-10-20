@@ -8,8 +8,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { initEngine } from "./engine";
+import { useEditor } from "./store";
 
-initEngine().then(() => {
+initEngine().then((engine) => {
+  if (import.meta.env.DEV) (window as any).__lumetrope = { engine, store: useEditor };
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <App />

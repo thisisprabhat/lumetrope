@@ -26,6 +26,8 @@ interface EditorState {
   camera: Camera;
   viewport: { w: number; h: number };
   wheelMode: WheelMode;
+  renderer: "gpu" | "cpu";
+  setRenderer: (r: "gpu" | "cpu") => void;
   fileName: string;
   toasts: Toast[];
   selection: string[];
@@ -80,6 +82,11 @@ export const useEditor = create<EditorState>((set, get) => ({
   camera: { zoom: 1, x: 0, y: 0 },
   viewport: { w: 0, h: 0 },
   wheelMode: (localStorageGet("lumetrope.wheelMode") as WheelMode) || "auto",
+  renderer: localStorageGet("lumetrope.renderer") === "cpu" ? "cpu" : "gpu",
+  setRenderer: (renderer) => {
+    localStorageSet("lumetrope.renderer", renderer);
+    set({ renderer });
+  },
   fileName: "Untitled",
   toasts: [],
   selection: [],

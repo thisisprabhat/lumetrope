@@ -43,6 +43,16 @@ impl Engine {
         self.inner.render_view_rgba(frame, w, h, scale, tx, ty)
     }
 
+    /// GPU display list JSON for the Canvas2D executor.
+    pub fn display_list(&mut self, frame: f64, scale: f64, tx: f64, ty: f64) -> String {
+        self.inner.display_list(frame, scale, tx, ty)
+    }
+
+    /// `{asset id: data URI}` for embedded images.
+    pub fn image_assets(&mut self) -> String {
+        self.inner.image_assets().to_string()
+    }
+
     pub fn project_json(&self) -> String {
         self.inner.project_json()
     }

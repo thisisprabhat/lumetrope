@@ -4,6 +4,7 @@ import { openFile } from "../files";
 import { classifyWheel, wheelZoomFactor, zoomAt } from "../lib/camera";
 import { useEditor } from "../store";
 import { PlayerBar } from "./PlayerBar";
+import { CanvasRenderer } from "../gpu/CanvasRenderer";
 import { openContextMenu } from "../contextMenu";
 import { canvasMenu } from "../menus";
 
@@ -17,6 +18,9 @@ import { canvasMenu } from "../menus";
  * forced via View ▸ Mouse wheel); shift+wheel pans horizontally; space-drag,
  * middle-drag or the hand tool pan.
  */
+/** Time of the last canvas render in ms (for the perf readout). */
+export let lastFrameMs = 0;
+
 export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode }) {
   const info = useEditor((s) => s.info);
   const revision = useEditor((s) => s.revision);
@@ -52,7 +56,12 @@ export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode
     return () => window.removeEventListener("lumetrope:fit", onFit);
   }, []);
 
-  // Render through the camera at device resolution.
+  // Render through the camera at device resolution, at most once per animation frame.
+  const renderer = useEditor((s) => s.renderer);
+  const gpu = useRef<CanvasRenderer | null>(null);
+  const imagesRev = useRef(-1);
+  const raf = useRef(0);
+  const [imageTick, setImageTick] = useState(0);
   const dpr = window.devicePixelRatio || 1;
   const pxW = Math.max(1, Math.round(viewport.w * dpr));
   const pxH = Math.max(1, Math.round(viewport.h * dpr));
@@ -60,9 +69,30 @@ export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode
     const c = canvasRef.current;
     const ctx = c?.getContext("2d");
     if (!c || !ctx || !info || viewport.w === 0) return;
-    const px = engine().render_view(frame, pxW, pxH, camera.zoom * dpr, camera.x * dpr, camera.y * dpr);
-    ctx.putImageData(new ImageData(new Uint8ClampedArray(px.buffer, px.byteOffset, px.byteLength), pxW, pxH), 0, 0);
-  }, [revision, frame, pxW, pxH, camera, info, dpr, viewport.w]);
+    cancelAnimationFrame(raf.current);
+    raf.current = requestAnimationFrame(() => {
+      const t0 = performance.now();
+      const e = engine();
+      const [z, x, y] = [camera.zoom * dpr, camera.x * dpr, camera.y * dpr];
+      if (renderer === "gpu") {
+        if (!gpu.current) {
+          gpu.current = new CanvasRenderer();
+          gpu.current.onImageLoad = () => setImageTick((n) => n + 1);
+        }
+        if (imagesRev.current !== revision) {
+          imagesRev.current = revision;
+          gpu.current.setImages(JSON.parse(e.image_assets()));
+        }
+        const cmds = JSON.parse(e.display_list(frame, z, x, y));
+        gpu.current.render(ctx, cmds, pxW, pxH, [x, y, info.w * z, info.h * z]);
+      } else {
+        const px = e.render_view(frame, pxW, pxH, z, x, y);
+        ctx.putImageData(new ImageData(new Uint8ClampedArray(px.buffer, px.byteOffset, px.byteLength), pxW, pxH), 0, 0);
+      }
+      lastFrameMs = performance.now() - t0;
+    });
+    return () => cancelAnimationFrame(raf.current);
+  }, [revision, frame, pxW, pxH, camera, info, dpr, viewport.w, renderer, imageTick]);
 
   // Wheel / pinch (non-passive so the browser does not zoom the page).
   useEffect(() => {
