@@ -5,6 +5,7 @@ import { persist } from "../persist";
 import { useEditor, type Mode, type Tool } from "../store";
 import { Icon } from "./Icon";
 import { Menu } from "./Menu";
+import { McpBadge } from "./McpDialog";
 
 const TOOLS: { id: Tool; icon: string; tip: string }[] = [
   { id: "select", icon: "select", tip: "Select (V)" },
@@ -111,6 +112,7 @@ export function TopBar() {
       </button>
       <div className="spacer" />
       <span className="filename">{fileName}</span>
+      <McpBadge />
       <div className="spacer" />
       <div className="mode-switch" role="tablist">
         {MODES.map((m) => (

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { CanvasOverlay } from "./components/CanvasOverlay";
 import { ContextMenuHost } from "./components/ContextMenu";
 import { ExportDialog } from "./components/ExportDialog";
+import { McpDialog } from "./components/McpDialog";
 import { Stage } from "./components/Stage";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
@@ -24,6 +25,7 @@ export function App() {
   const refresh = useEditor((s) => s.refresh);
   const mode = useEditor((s) => s.mode);
   const exportOpen = useEditor((s) => s.exportOpen);
+  const mcpHelpOpen = useEditor((s) => s.mcpHelpOpen);
   const setExportOpen = useEditor((s) => s.setExportOpen);
   useEffect(() => {
     refresh();
@@ -56,6 +58,7 @@ export function App() {
       <Toasts />
       <ContextMenuHost />
       {exportOpen && <ExportDialog onClose={() => setExportOpen(false)} />}
+      {mcpHelpOpen && <McpDialog />}
     </div>
   );
 }

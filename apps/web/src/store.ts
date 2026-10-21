@@ -54,6 +54,9 @@ interface EditorState {
   fonts: string[];
   renaming: string | null;
   exportOpen: boolean;
+  mcpStatus: "off" | "connecting" | "connected" | "error";
+  webMcp: boolean;
+  mcpHelpOpen: boolean;
   projectId: string;
   savedAt: number;
   historyTick: number;
@@ -126,6 +129,9 @@ export const useEditor = create<EditorState>((set, get) => ({
   fonts: [],
   renaming: null,
   exportOpen: false,
+  mcpStatus: "off",
+  webMcp: false,
+  mcpHelpOpen: false,
   projectId: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `p${Date.now()}`,
   savedAt: 0,
   historyTick: 0,

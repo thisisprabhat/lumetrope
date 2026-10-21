@@ -9,9 +9,11 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { initEngine } from "./engine";
 import { useEditor } from "./store";
+import { initMcp } from "./mcp/client";
 
 initEngine().then((engine) => {
   if (import.meta.env.DEV) (window as any).__lumetrope = { engine, store: useEditor };
+  initMcp();
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <App />
