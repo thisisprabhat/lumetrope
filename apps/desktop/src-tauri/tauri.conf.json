@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Lumetrope",
+  "version": "0.1.0",
+  "identifier": "app.lumetrope.editor",
+  "build": {
+    "frontendDist": "../../web/dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "pnpm --dir ../.. --filter @lumetrope/web build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Lumetrope",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "titleBarStyle": "Visible",
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "category": "GraphicsAndDesign",
+    "shortDescription": "Open-source Lottie & dotLottie animation editor",
+    "copyright": "MIT licensed",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "macOS": { "minimumSystemVersion": "11.0" }
+  }
+}

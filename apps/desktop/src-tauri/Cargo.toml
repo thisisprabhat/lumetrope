@@ -1,0 +1,15 @@
+[package]
+name = "lumetrope-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Lumetrope desktop app (Tauri shell around the web editor)"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde_json = "1"

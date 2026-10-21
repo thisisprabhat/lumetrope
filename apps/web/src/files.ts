@@ -1,5 +1,6 @@
 import { engine } from "./engine";
 import { useEditor } from "./store";
+import { pickFile as platformPick, saveFile } from "./platform";
 import { newProjectId } from "./persist";
 
 export const OPEN_ACCEPT = ".json,.lottie,.svg,.png,.jpg,.jpeg";
@@ -24,22 +25,12 @@ export async function openFile(file: File): Promise<void> {
 }
 
 export function pickFile(accept = OPEN_ACCEPT): Promise<File | null> {
-  return new Promise((resolve) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = accept;
-    input.onchange = () => resolve(input.files?.[0] ?? null);
-    input.click();
-  });
+  return platformPick(accept);
 }
 
+/** Save/download a file (native save dialog on desktop). */
 export function download(name: string, data: BlobPart, mime: string): void {
-  const url = URL.createObjectURL(new Blob([data], { type: mime }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  saveFile(name, data, mime).catch((e) => useEditor.getState().toast(`Could not save: ${e}`, "error"));
 }
 
 /** Fetch a same-origin URL (e.g. a bundled sample) and open it. */

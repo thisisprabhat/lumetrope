@@ -1,0 +1,14 @@
+{
+  "name": "@lumetrope/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build --bundles app",
+    "icons": "tauri icon icon-source.png -o src-tauri/icons"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.1.0"
+  }
+}
