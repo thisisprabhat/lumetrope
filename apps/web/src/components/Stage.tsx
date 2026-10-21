@@ -65,12 +65,18 @@ export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode
   const dpr = window.devicePixelRatio || 1;
   const pxW = Math.max(1, Math.round(viewport.w * dpr));
   const pxH = Math.max(1, Math.round(viewport.h * dpr));
+  // Latest render inputs; one pending rAF draws whatever is current (never cancelled,
+  // so frequent state updates cannot starve the canvas).
+  const latest = useRef({ revision, frame, pxW, pxH, camera, info, dpr, renderer });
+  latest.current = { revision, frame, pxW, pxH, camera, info, dpr, renderer };
   useEffect(() => {
-    const c = canvasRef.current;
-    const ctx = c?.getContext("2d");
-    if (!c || !ctx || !info || viewport.w === 0) return;
-    cancelAnimationFrame(raf.current);
+    if (raf.current) return;
     raf.current = requestAnimationFrame(() => {
+      raf.current = 0;
+      const { revision, frame, pxW, pxH, camera, info, dpr, renderer } = latest.current;
+      const c = canvasRef.current;
+      const ctx = c?.getContext("2d");
+      if (!c || !ctx || !info || pxW <= 1) return;
       const t0 = performance.now();
       const e = engine();
       const [z, x, y] = [camera.zoom * dpr, camera.x * dpr, camera.y * dpr];
@@ -83,16 +89,21 @@ export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode
           imagesRev.current = revision;
           gpu.current.setImages(JSON.parse(e.image_assets()));
         }
-        const cmds = JSON.parse(e.display_list(frame, z, x, y));
-        gpu.current.render(ctx, cmds, pxW, pxH, [x, y, info.w * z, info.h * z]);
+        gpu.current.render(ctx, JSON.parse(e.display_list(frame, z, x, y)), pxW, pxH, [x, y, info.w * z, info.h * z]);
       } else {
         const px = e.render_view(frame, pxW, pxH, z, x, y);
         ctx.putImageData(new ImageData(new Uint8ClampedArray(px.buffer, px.byteOffset, px.byteLength), pxW, pxH), 0, 0);
       }
       lastFrameMs = performance.now() - t0;
     });
-    return () => cancelAnimationFrame(raf.current);
   }, [revision, frame, pxW, pxH, camera, info, dpr, viewport.w, renderer, imageTick]);
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(raf.current);
+      raf.current = 0;
+    },
+    [],
+  );
 
   // Wheel / pinch (non-passive so the browser does not zoom the page).
   useEffect(() => {

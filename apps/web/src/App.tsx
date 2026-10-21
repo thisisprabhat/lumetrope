@@ -11,6 +11,10 @@ import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { Timeline } from "./panels/Timeline";
 import { useShortcuts } from "./shortcuts";
 import { useEditor } from "./store";
+import { SmGraph } from "./sm/SmGraph";
+import { EventLog, MachinesPanel, PreviewPanel, SmInspector } from "./sm/SmPanels";
+import { SmPointerOverlay } from "./sm/SmPointerOverlay";
+import { useSmPreview } from "./sm/useSmPreview";
 import { usePlayback } from "./usePlayback";
 
 let openedFromUrl = false;
@@ -29,20 +33,15 @@ export function App() {
     }
   }, [refresh]);
   usePlayback();
+  useSmPreview();
   useShortcuts();
   return (
     <div className={`app mode-${mode}`}>
       <TopBar />
-      <aside className="panel left">
-        <LeftSidebar />
-      </aside>
-      <Stage overlay={mode === "animate" ? (zoom) => <CanvasOverlay zoom={zoom} /> : undefined} />
-      <aside className="panel right">
-        <PropertiesPanel />
-      </aside>
-      <section className="panel bottom">
-        <Timeline />
-      </section>
+      <aside className="panel left">{mode === "animate" ? <LeftSidebar /> : <MachinesPanel />}</aside>
+      <Stage overlay={(zoom) => (mode === "animate" ? <CanvasOverlay zoom={zoom} /> : <SmPointerOverlay zoom={zoom} />)} />
+      <aside className="panel right">{mode === "animate" ? <PropertiesPanel /> : mode === "state" ? <SmInspector /> : <PreviewPanel />}</aside>
+      <section className="panel bottom">{mode === "animate" ? <Timeline /> : mode === "state" ? <SmGraph /> : <EventLog />}</section>
       <Toasts />
       <ContextMenuHost />
       {exportOpen && <ExportDialog onClose={() => setExportOpen(false)} />}

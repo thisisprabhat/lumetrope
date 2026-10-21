@@ -3,8 +3,15 @@ import { formatTime } from "../lib/time";
 import { Icon } from "./Icon";
 
 export function PlayerBar() {
-  const { info, frame, playing, loop, speed, setFrame, setPlaying, setLoop, setSpeed } = useEditor();
+  const { info, frame, playing, loop, speed, setFrame, setPlaying, setLoop, setSpeed, mode, smSnap } = useEditor();
   if (!info) return null;
+  if (mode !== "animate")
+    return smSnap ? (
+      <div className="player sm-player">
+        <span className="sm-state-badge">{smSnap.state}</span>
+        <span className="timecode num">{formatTime(frame - info.ip, info.fr)}</span>
+      </div>
+    ) : null;
   const last = Math.max(info.ip, Math.ceil(info.op) - 1);
   return (
     <div className="player">

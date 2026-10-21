@@ -5,6 +5,19 @@ import { clampFrame } from "./lib/time";
 
 export type Mode = "animate" | "state" | "preview";
 export type Tool = "select" | "rect" | "ellipse" | "polygon" | "star" | "pen" | "text" | "hand";
+export interface SmSnapshot {
+  state: string;
+  frame: number;
+  playing: boolean;
+  tweening: boolean;
+  stopped: boolean;
+  inputs: Record<string, boolean | number | string | null>;
+  theme: string | null;
+  events: { type: string; [k: string]: unknown }[];
+}
+
+export type SmSelection = { kind: "state"; name: string } | { kind: "transition"; from: string; index: number } | null;
+
 export type LeftTab = "layers" | "assets" | "segments" | "themes" | "colors" | "history";
 
 export interface Toast {
@@ -41,6 +54,15 @@ interface EditorState {
   fonts: string[];
   renaming: string | null;
   exportOpen: boolean;
+  machine: string | null;
+  setMachine: (id: string | null) => void;
+  smSnap: SmSnapshot | null;
+  setSmSnap: (s: SmSnapshot | null) => void;
+  smLog: { t: number; text: string; kind: string }[];
+  logSm: (events: { type: string; [k: string]: unknown }[]) => void;
+  clearSmLog: () => void;
+  smSel: SmSelection;
+  setSmSel: (s: SmSelection) => void;
   setExportOpen: (b: boolean) => void;
   setRenaming: (id: string | null) => void;
   addFontName: (n: string) => void;
@@ -100,6 +122,34 @@ export const useEditor = create<EditorState>((set, get) => ({
   fonts: [],
   renaming: null,
   exportOpen: false,
+  machine: null,
+  setMachine: (machine) => set({ machine, smSel: null }),
+  smSnap: null,
+  setSmSnap: (smSnap) => set({ smSnap }),
+  smLog: [],
+  logSm: (events) => {
+    if (!events.length) return;
+    const t = performance.now();
+    const add = events
+      .map((e) => ({
+        t,
+        kind: e.type,
+        text:
+          e.type === "Transition" ? `${e.from} → ${e.to}` : e.type === "StateEntered" ? `entered ${e.state}` : e.type === "StateExited" ? `left ${e.state}` : e.type === "InputChanged" ? `${e.name} = ${JSON.stringify(e.value)}` : e.type === "OpenUrl" ? `open ${e.url}` : e.type === "CustomEvent" ? `event "${e.value}"` : e.type === "SetTheme" ? `theme ${e.theme}` : String(e.type),
+      }));
+    const log = [...get().smLog];
+    for (const a of add) {
+      const last = log[log.length - 1];
+      if (last && last.kind === a.kind && last.text.replace(/ ×\d+$/, "") === a.text) {
+        const n = Number(/ ×(\d+)$/.exec(last.text)?.[1] ?? 1) + 1;
+        log[log.length - 1] = { ...last, t: a.t, text: `${a.text} ×${n}` };
+      } else log.push(a);
+    }
+    set({ smLog: log.slice(-200) });
+  },
+  clearSmLog: () => set({ smLog: [] }),
+  smSel: null,
+  setSmSel: (smSel) => set({ smSel }),
   setExportOpen: (exportOpen) => set({ exportOpen }),
   setRenaming: (renaming) => set({ renaming }),
   addFontName: (n) => set({ fonts: Array.from(new Set([...get().fonts, n])) }),

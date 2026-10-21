@@ -5,8 +5,9 @@ import { advance } from "./lib/time";
 /** Drive the playhead with requestAnimationFrame while playing. */
 export function usePlayback(): void {
   const playing = useEditor((s) => s.playing);
+  const mode = useEditor((s) => s.mode);
   useEffect(() => {
-    if (!playing) return;
+    if (!playing || mode !== "animate") return;
     let raf = 0;
     let last = performance.now();
     let exact = useEditor.getState().frame;
@@ -25,5 +26,5 @@ export function usePlayback(): void {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing]);
+  }, [playing, mode]);
 }
