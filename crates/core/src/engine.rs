@@ -21,6 +21,8 @@ pub struct Engine {
     sm: Option<crate::sm::Machine>,
     /// Theme set by a running state machine (overrides the preview theme).
     runtime_theme: Option<String>,
+    /// Local version history.
+    repo: crate::vcs::Repo,
 }
 
 impl Default for Engine {
@@ -41,6 +43,7 @@ impl Engine {
             view: "root".into(),
             sm: None,
             runtime_theme: None,
+            repo: crate::vcs::Repo::new(),
         }
     }
 
@@ -240,6 +243,70 @@ impl Engine {
         let mut out = pm.take();
         unpremultiply(&mut out);
         out
+    }
+
+    // ------------------------------------------------------- version control
+
+    pub fn vcs_commit(&mut self, message: &str, author: &str, ts: f64) -> Result<String, String> {
+        let bytes = self.project.to_string().into_bytes();
+        self.repo.commit(&bytes, message, author, ts)
+    }
+
+    pub fn vcs_log(&self) -> Value {
+        json!({"branch": self.repo.current_branch(), "commits": self.repo.log().iter().map(|c| c.to_json()).collect::<Vec<_>>()})
+    }
+
+    /// Load a version into the editor (undo history is cleared).
+    pub fn vcs_restore(&mut self, id: &str) -> Result<(), String> {
+        let bytes = self.repo.checkout(id)?;
+        let v: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+        self.replace_project(project::normalize(v)?);
+        Ok(())
+    }
+
+    pub fn vcs_branches(&self) -> Value {
+        json!({"current": self.repo.current_branch(), "branches": self.repo.branches().into_iter().map(|(n, h)| json!({"name": n, "head": h})).collect::<Vec<_>>()})
+    }
+
+    pub fn vcs_create_branch(&mut self, name: &str) -> Result<(), String> {
+        self.repo.create_branch(name, None)
+    }
+
+    /// Switch branch and load its latest version (keeps the current document if the branch is empty).
+    pub fn vcs_switch(&mut self, name: &str) -> Result<(), String> {
+        if let Some(bytes) = self.repo.switch(name)? {
+            let v: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+            self.replace_project(project::normalize(v)?);
+        }
+        Ok(())
+    }
+
+    pub fn vcs_diff(&self, a: &str, b: &str) -> Result<Value, String> {
+        self.repo.diff(a, b)
+    }
+
+    /// Changes in the working document since the branch head.
+    pub fn vcs_status(&self) -> Value {
+        let head = match self.repo.head_commit() {
+            Some(c) => self.repo.checkout(&c.id).ok().and_then(|b| serde_json::from_slice::<Value>(&b).ok()),
+            None => None,
+        };
+        let empty = project::from_lottie(project::blank_lottie(0.0, 0.0, 0.0, 0.0));
+        crate::vcs::diff_projects(head.as_ref().unwrap_or(&empty), &self.project)
+    }
+
+    pub fn vcs_export(&self) -> Vec<u8> {
+        self.repo.to_bytes()
+    }
+
+    pub fn vcs_import(&mut self, bytes: &[u8]) -> Result<(), String> {
+        self.repo = crate::vcs::Repo::from_bytes(bytes)?;
+        Ok(())
+    }
+
+    /// Start a fresh, empty history (e.g. when a different file is opened).
+    pub fn vcs_reset(&mut self) {
+        self.repo = crate::vcs::Repo::new();
     }
 
     // ------------------------------------------------------- state machines

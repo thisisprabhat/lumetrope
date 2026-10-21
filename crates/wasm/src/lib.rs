@@ -160,6 +160,51 @@ impl Engine {
         self.inner.sm_snapshot().to_string()
     }
 
+    /// Commit the current project; returns the version id.
+    pub fn vcs_commit(&mut self, message: &str, author: &str, ts: f64) -> Result<String, JsValue> {
+        self.inner.vcs_commit(message, author, ts).map_err(err)
+    }
+
+    pub fn vcs_log(&self) -> String {
+        self.inner.vcs_log().to_string()
+    }
+
+    pub fn vcs_restore(&mut self, id: &str) -> Result<(), JsValue> {
+        self.inner.vcs_restore(id).map_err(err)
+    }
+
+    pub fn vcs_branches(&self) -> String {
+        self.inner.vcs_branches().to_string()
+    }
+
+    pub fn vcs_create_branch(&mut self, name: &str) -> Result<(), JsValue> {
+        self.inner.vcs_create_branch(name).map_err(err)
+    }
+
+    pub fn vcs_switch(&mut self, name: &str) -> Result<(), JsValue> {
+        self.inner.vcs_switch(name).map_err(err)
+    }
+
+    pub fn vcs_diff(&self, a: &str, b: &str) -> Result<String, JsValue> {
+        self.inner.vcs_diff(a, b).map(|v| v.to_string()).map_err(err)
+    }
+
+    pub fn vcs_status(&self) -> String {
+        self.inner.vcs_status().to_string()
+    }
+
+    pub fn vcs_export(&self) -> Vec<u8> {
+        self.inner.vcs_export()
+    }
+
+    pub fn vcs_import(&mut self, bytes: &[u8]) -> Result<(), JsValue> {
+        self.inner.vcs_import(bytes).map_err(err)
+    }
+
+    pub fn vcs_reset(&mut self) {
+        self.inner.vcs_reset();
+    }
+
     pub fn revision(&self) -> f64 {
         self.inner.revision() as f64
     }

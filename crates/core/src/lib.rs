@@ -11,3 +11,4 @@ pub mod ops;
 pub mod hit;
 pub mod svg;
 pub mod sm;
+pub mod vcs;

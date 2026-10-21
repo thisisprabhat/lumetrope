@@ -192,3 +192,25 @@ fn engine_state_machine_preview_session() {
     e.sm_stop();
     assert_eq!(&e.render_rgba(20.0, 100, 100)[(50 * 100 + 50) * 4..(50 * 100 + 50) * 4 + 3], &[255, 0, 0], "stopping clears the runtime theme");
 }
+
+#[test]
+fn engine_version_history() {
+    let mut e = Engine::new();
+    let a = e.vcs_commit("start", "me", 1.0).unwrap();
+    e.apply("create_shape", &json!({"type": "rect", "name": "Box"}));
+    assert_eq!(e.vcs_status()["layers_added"], json!(["Box"]), "uncommitted changes vs head");
+    let b = e.vcs_commit("box", "me", 2.0).unwrap();
+    assert!(e.vcs_commit("again", "me", 3.0).is_err());
+    assert_eq!(e.vcs_log()["commits"].as_array().unwrap().len(), 2);
+    e.vcs_restore(&a).unwrap();
+    assert_eq!(e.info()["layers"], 0);
+    assert_eq!(e.vcs_diff(&a, &b).unwrap()["layers_added"], json!(["Box"]));
+    e.vcs_create_branch("alt").unwrap();
+    assert_eq!(e.vcs_log()["branch"], "alt");
+    let saved = e.vcs_export();
+    let mut e2 = Engine::new();
+    e2.vcs_import(&saved).unwrap();
+    assert_eq!(e2.vcs_log()["branch"], "alt");
+    e2.vcs_switch("main").unwrap();
+    assert_eq!(e2.info()["layers"], 1, "switching loads the branch head");
+}
