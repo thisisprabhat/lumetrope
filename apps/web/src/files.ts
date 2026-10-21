@@ -1,5 +1,6 @@
 import { engine } from "./engine";
 import { useEditor } from "./store";
+import { newProjectId } from "./persist";
 
 export const OPEN_ACCEPT = ".json,.lottie,.svg,.png,.jpg,.jpeg";
 
@@ -9,6 +10,10 @@ export async function openFile(file: File): Promise<void> {
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
     engine().load_file(file.name, bytes);
+    engine().vcs_reset();
+    engine().vcs_commit(`Opened ${file.name}`, "You", Date.now());
+    useEditor.setState({ projectId: newProjectId(), selection: [], shape: null, scene: "root" });
+    st.bumpHistory();
     st.setFileName(file.name.replace(/\.(json|lottie)$/i, ""));
     st.setFrame(0);
     st.refresh();

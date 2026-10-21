@@ -5,6 +5,8 @@ import { download, openFile, pickFile } from "./files";
 import { importFile } from "./panels/LeftSidebar";
 import { useEditor } from "./store";
 import { exportFileName } from "./lib/export";
+import { loadProject, newProjectId } from "./persist";
+import { commitNow } from "./panels/HistoryPanel";
 
 const st = () => useEditor.getState();
 
@@ -63,6 +65,9 @@ export const commands = {
   },
   newProject() {
     engine().new_project(512, 512, 30, 90);
+    engine().vcs_reset();
+    useEditor.setState({ projectId: newProjectId() });
+    st().bumpHistory();
     st().select([]);
     st().setScene("root");
     st().setFileName("Untitled");
@@ -90,6 +95,13 @@ export const commands = {
     } catch (e) {
       st().toast(String(e), "error");
     }
+  },
+  saveVersion() {
+    st().setLeftTab("history");
+    commitNow("");
+  },
+  async openRecent(id: string) {
+    if (await loadProject(id)) st().toast("Opened from local library");
   },
   openExport() {
     st().setExportOpen(true);

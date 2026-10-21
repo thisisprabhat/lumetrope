@@ -6,6 +6,7 @@ import { Stage } from "./components/Stage";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
 import { openUrl } from "./files";
+import { loadProject, persist, scheduleSave } from "./persist";
 import { LeftSidebar } from "./panels/LeftSidebar";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { Timeline } from "./panels/Timeline";
@@ -27,12 +28,22 @@ export function App() {
   useEffect(() => {
     refresh();
     const open = new URLSearchParams(location.search).get("open");
-    if (open && open.startsWith("/") && !openedFromUrl) {
-      openedFromUrl = true; // StrictMode runs effects twice in development
-      void openUrl(open);
-    }
+    if (openedFromUrl) return;
+    openedFromUrl = true; // StrictMode runs effects twice in development
+    if (open && open.startsWith("/")) void openUrl(open);
+    else
+      void persist
+        .all()
+        .then((recs) => recs[0] && loadProject(recs[0].id))
+        .catch(() => undefined);
   }, [refresh]);
   usePlayback();
+  const revision = useEditor((s) => s.revision);
+  const historyTick = useEditor((s) => s.historyTick);
+  const fileName = useEditor((s) => s.fileName);
+  useEffect(() => {
+    if (openedFromUrl) scheduleSave();
+  }, [revision, historyTick, fileName]);
   useSmPreview();
   useShortcuts();
   return (

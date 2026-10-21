@@ -27,6 +27,7 @@ export function useShortcuts(): void {
       if (mod && k === "v") return (e.preventDefault(), void commands.paste());
       if (mod && k === "a") return (e.preventDefault(), commands.selectAll());
       if (mod && k === "o") return (e.preventDefault(), void commands.open());
+      if (mod && e.shiftKey && k === "s") return (e.preventDefault(), commands.saveVersion());
       if (mod && k === "s") return (e.preventDefault(), commands.saveProject());
       if (mod && k === "e") return (e.preventDefault(), commands.openExport());
       if (mod && k === "g") return (e.preventDefault(), commands.precompose());

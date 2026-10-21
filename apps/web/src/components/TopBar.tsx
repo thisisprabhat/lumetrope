@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { commands } from "../commands";
+import { relativeTime } from "../lib/history";
+import { persist } from "../persist";
 import { useEditor, type Mode, type Tool } from "../store";
 import { Icon } from "./Icon";
 import { Menu } from "./Menu";
@@ -38,11 +41,13 @@ export function TopBar() {
           { label: "Open…", shortcut: "⌘O", onSelect: () => void commands.open() },
           { label: "Import SVG, Lottie, image or font…", onSelect: () => void commands.import() },
           { separator: true, label: "" },
-          { label: "Save project", shortcut: "⌘S", onSelect: commands.saveProject },
+          { label: "Save version", shortcut: "⇧⌘S", onSelect: commands.saveVersion },
+          { label: "Download project (.lottie)", shortcut: "⌘S", onSelect: commands.saveProject },
           { label: "Export…", shortcut: "⌘E", onSelect: commands.openExport },
           { label: "Quick export Lottie JSON", onSelect: commands.exportJson },
         ]}
       />
+      <RecentMenu />
       <Menu
         trigger={<span className="menu-word">Edit</span>}
         items={[
@@ -119,5 +124,26 @@ export function TopBar() {
         <Icon name="export" size={14} /> Export
       </button>
     </header>
+  );
+}
+
+function RecentMenu() {
+  const [items, setItems] = useState<{ id: string; name: string; updated: number }[]>([]);
+  const savedAt = useEditor((s) => s.savedAt);
+  useEffect(() => {
+    persist
+      .all()
+      .then((r) => setItems(r.slice(0, 12)))
+      .catch(() => setItems([]));
+  }, [savedAt]);
+  return (
+    <Menu
+      trigger={<span className="menu-word">Recent</span>}
+      items={
+        items.length
+          ? items.map((r) => ({ label: `${r.name} · ${relativeTime(r.updated)}`, onSelect: () => void commands.openRecent(r.id) }))
+          : [{ label: "No saved projects yet", disabled: true }]
+      }
+    />
   );
 }

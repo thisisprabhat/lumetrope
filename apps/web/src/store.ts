@@ -54,6 +54,10 @@ interface EditorState {
   fonts: string[];
   renaming: string | null;
   exportOpen: boolean;
+  projectId: string;
+  savedAt: number;
+  historyTick: number;
+  bumpHistory: () => void;
   machine: string | null;
   setMachine: (id: string | null) => void;
   smSnap: SmSnapshot | null;
@@ -122,6 +126,10 @@ export const useEditor = create<EditorState>((set, get) => ({
   fonts: [],
   renaming: null,
   exportOpen: false,
+  projectId: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `p${Date.now()}`,
+  savedAt: 0,
+  historyTick: 0,
+  bumpHistory: () => set({ historyTick: get().historyTick + 1 }),
   machine: null,
   setMachine: (machine) => set({ machine, smSel: null }),
   smSnap: null,
