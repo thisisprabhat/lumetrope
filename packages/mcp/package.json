@@ -1,0 +1,25 @@
+{
+  "name": "lumetrope-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that lets AI agents drive the Lumetrope animation editor",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "lumetrope-mcp": "dist/index.js" },
+  "files": ["dist", "catalog.json"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "catalog": "cargo run -q -p lumetrope-core --bin catalog > catalog.json",
+    "test": "vitest run",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.20.2",
+    "ws": "8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.6",
+    "@types/ws": "8.5.13",
+    "typescript": "5.6.3",
+    "vitest": "2.1.4"
+  }
+}

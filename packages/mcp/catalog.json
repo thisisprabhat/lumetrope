@@ -1,0 +1,3277 @@
+[
+  {
+    "name": "read_scene",
+    "description": "Read the active animation: size, fps, duration, segments, and every layer of a scene (default root) with its id, name, type, parent, in/out, visibility, lock and shape tree paths. Start here to get layer ids.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "scene": {
+          "type": "string",
+          "description": "Scene id (default 'root')"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "inspect_layer",
+    "description": "Full raw Lottie JSON of one layer plus its bounds at 'frame' and the list of animated property paths.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "list_scenes",
+    "description": "List the root scene and every nested scene (precomp) with ids and layer counts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "create_scene",
+    "description": "Create an empty nested scene (precomp). With add_to_root, also place it as a layer on top of the root scene.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "add_to_root": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_background",
+    "description": "Set the preview/export background colour of the active animation (null for transparent). Stored in the dotLottie manifest on export.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": [
+            "string",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "list_colors",
+    "description": "List every unique colour used by fills, strokes, solids and text, with usage counts — useful for recolouring.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "replace_color",
+    "description": "Replace a colour everywhere (fills, strokes, keyframes, solids, text). 'tolerance' 0..1 also matches near colours.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": [
+            "string",
+            "array"
+          ]
+        },
+        "to": {
+          "type": [
+            "string",
+            "array"
+          ]
+        },
+        "tolerance": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_scene_settings",
+    "description": "Change the active animation's canvas size, frame rate, duration (in frames) or name. Omitted fields are left unchanged.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "fps": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "duration_frames": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Out point (op) in frames"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "create_shape",
+    "description": "Create a new shape layer (rect, ellipse, polygon, star or freeform path) on top of the scene, with optional fill and stroke. Returns the new layer id.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "rect",
+            "ellipse",
+            "polygon",
+            "star",
+            "path"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "Centre in scene coordinates (defaults to the scene centre)"
+        },
+        "size": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "Width and height for rect/ellipse (default 100×100)"
+        },
+        "roundness": {
+          "type": "number",
+          "description": "Corner radius (rect) or point roundness % (star/polygon)"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Outer radius for star/polygon (default 50)"
+        },
+        "inner_radius": {
+          "type": "number",
+          "description": "Inner radius for star (default radius/2)"
+        },
+        "points": {
+          "description": "Star/polygon point count, or path vertices [[x,y],...] relative to position"
+        },
+        "path": {
+          "type": "object",
+          "description": "Bezier {v, i, o, c} relative to position"
+        },
+        "closed": {
+          "type": "boolean"
+        },
+        "fill": {
+          "description": "Fill colour; null for no fill (default #c4c4c4)",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stroke": {
+          "description": "Stroke colour (default none)",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stroke_width": {
+          "type": "number"
+        },
+        "scene": {
+          "type": "string",
+          "description": "Scene/precomp id to add to (default 'root')"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "create_solid",
+    "description": "Create a solid colour layer covering the scene (or a given size).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "description": "Solid colour",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "scene": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "create_null",
+    "description": "Create an invisible null layer, useful as a parent/controller for other layers.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "Position"
+        },
+        "scene": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "duplicate_layer",
+    "description": "Duplicate a layer (with its animation) directly above the original. Returns the new id.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "delete_layer",
+    "description": "Delete a layer. Children parented to it are unparented.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "rename_layer",
+    "description": "Rename a layer. State machine interactions match layers by name, so keep names unique.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layer",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "reorder_layer",
+    "description": "Move a layer in the stacking order: give an index (0 = top) or 'to' front/back/up/down.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "to": {
+          "type": "string",
+          "enum": [
+            "front",
+            "back",
+            "up",
+            "down"
+          ]
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_parent",
+    "description": "Parent a layer to another layer in the same scene (child follows the parent's transform), or unparent with parent=null.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "layer",
+        "parent"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_layer_visibility",
+    "description": "Show or hide a layer.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "visible": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "layer",
+        "visible"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_layer_lock",
+    "description": "Lock or unlock a layer for canvas editing (editor-only flag, not exported).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "locked": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "layer",
+        "locked"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_layer_time",
+    "description": "Set a layer's in/out points, start time offset (frames) and time stretch.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "in": {
+          "type": "number"
+        },
+        "out": {
+          "type": "number"
+        },
+        "start": {
+          "type": "number"
+        },
+        "stretch": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_blend_mode",
+    "description": "Set a layer's blend mode.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "multiply",
+            "screen",
+            "overlay",
+            "darken",
+            "lighten",
+            "color_dodge",
+            "color_burn",
+            "hard_light",
+            "soft_light",
+            "difference",
+            "exclusion",
+            "hue",
+            "saturation",
+            "color",
+            "luminosity",
+            "add"
+          ]
+        }
+      },
+      "required": [
+        "layer",
+        "mode"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_matte",
+    "description": "Use one layer as a track matte for another (alpha, alpha_inverted, luma, luma_inverted). The matte layer is moved directly above the target and hidden from direct rendering.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "matte_layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "alpha",
+            "alpha_inverted",
+            "luma",
+            "luma_inverted"
+          ]
+        }
+      },
+      "required": [
+        "layer",
+        "matte_layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_matte",
+    "description": "Remove a layer's track matte.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "precompose_layers",
+    "description": "Move layers into a new nested scene (precomp) and replace them with one precomp layer. Returns the new scene id and layer id.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layers"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "align_layers",
+    "description": "Align layers' bounding boxes to the scene or to the selection's combined bounds.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right",
+            "top",
+            "middle",
+            "bottom"
+          ]
+        },
+        "to": {
+          "type": "string",
+          "enum": [
+            "scene",
+            "selection"
+          ]
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layers",
+        "align"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "distribute_layers",
+    "description": "Evenly space the centres of 3+ layers horizontally or vertically, keeping the outermost ones in place.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 3
+        },
+        "axis": {
+          "type": "string",
+          "enum": [
+            "horizontal",
+            "vertical"
+          ]
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layers",
+        "axis"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "paste_layers",
+    "description": "Insert copies of layer JSON objects (e.g. from inspect_layer) on top of a scene, assigning fresh ids and optionally offsetting them. Parent/matte links inside the pasted set are preserved.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "minItems": 1
+        },
+        "scene": {
+          "type": "string"
+        },
+        "offset": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "layers"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "nudge_layers",
+    "description": "Move layers by a scene-space delta (dx, dy) like dragging on the canvas: static positions shift; animated positions get a keyframe at 'frame'. Parented layers are handled.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dx": {
+          "type": "number"
+        },
+        "dy": {
+          "type": "number"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layers"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_transform",
+    "description": "Set transform properties of a layer (or a shape group via 'shape'). Static properties are replaced; animated ones get a keyframe at 'frame'. Rotation in degrees (clockwise), scale and opacity in percent.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape group path, e.g. '0'"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "x, y"
+        },
+        "scale": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "x%, y%"
+        },
+        "rotation": {
+          "type": "number"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "anchor": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "Anchor point in layer space"
+        },
+        "skew": {
+          "type": "number"
+        },
+        "skew_axis": {
+          "type": "number"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_anchor_point",
+    "description": "Move a layer's anchor point to a named position of its bounds (center, top_left, …) or explicit layer-space [x,y], compensating position so the layer does not move visually.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "anchor": {
+          "description": "center|top_left|top|top_right|left|right|bottom_left|bottom|bottom_right or [x,y]"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "anchor"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "flip_layer",
+    "description": "Mirror a layer horizontally or vertically by negating its scale.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id from read_scene (e.g. 'root:3') or a unique layer name"
+        },
+        "axis": {
+          "type": "string",
+          "enum": [
+            "horizontal",
+            "vertical"
+          ]
+        }
+      },
+      "required": [
+        "layer",
+        "axis"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_keyframe",
+    "description": "Add or replace a keyframe on one property at an integer frame. A static property becomes animated. Optional easing (preset name, 'hold', or [x1,y1,x2,y2]) applies to the segment starting at this keyframe.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "frame": {
+          "type": "number",
+          "minimum": 0
+        },
+        "value": {
+          "description": "Number, [x,y], colour hex, or bezier {v,i,o,c} for paths"
+        },
+        "easing": {}
+      },
+      "required": [
+        "layer",
+        "frame",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_keyframe",
+    "description": "Remove the keyframe at a frame. When one keyframe or none remains the property becomes static.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "frame"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "move_keyframe",
+    "description": "Move one keyframe from 'frame' to frame 'to' (fails if another keyframe is already there).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "frame": {
+          "type": "number"
+        },
+        "to": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "layer",
+        "frame",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_keyframe_easing",
+    "description": "Set the easing of the segment that starts at the keyframe on 'frame'. Presets: linear, ease, ease_in, ease_out, ease_in_out, smooth, ease_in_back, ease_out_back, ease_in_out_back, snappy, hold — or a cubic bezier [x1,y1,x2,y2].",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "frame": {
+          "type": "number"
+        },
+        "easing": {}
+      },
+      "required": [
+        "layer",
+        "frame",
+        "easing"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_property",
+    "description": "Set any property's value. Static properties are replaced; animated ones get a keyframe at 'frame' (default 0). Use this for shape items, masks ('mask:<i>') and effects ('effect:<i>') as well as transforms.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "value": {},
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "get_property",
+    "description": "Read one property at a frame: evaluated value, whether it is animated, whether a keyframe sits on this frame, and all keyframe frames.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "read_keyframes",
+    "description": "List keyframes (frame, value, easing) of one property, or of every animated property of a layer when 'property' is omitted.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "clear_animation",
+    "description": "Remove all keyframes of a property, keeping its value at 'frame' (default the first keyframe) as a static value.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "shift_keyframes",
+    "description": "Move keyframes in time by 'by' frames (negative = earlier). Applies to one property, or all animated properties of the layer; optionally only keyframes at or after 'from_frame'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "by": {
+          "type": "number"
+        },
+        "from_frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "by"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "retime_keyframes",
+    "description": "Scale keyframe timing around a pivot frame (scale 2 = twice as slow, 0.5 = twice as fast).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Optional shape path ('0', '0/1'), 'mask:<i>' or 'effect:<i>'"
+        },
+        "property": {
+          "type": "string",
+          "description": "position, scale, rotation, opacity, anchor, skew, skew_axis, color, width, size, roundness, start, end, offset, path, … or a raw Lottie key"
+        },
+        "path": {
+          "type": "string",
+          "description": "Alternative to shape+property: raw JSON path inside the layer as returned by read_keyframes (e.g. 'ks/p', 'shapes/1/c')"
+        },
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pivot": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "scale"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "copy_animation",
+    "description": "Copy a layer's transform animation (all animated transform properties, or the listed ones) onto another layer, optionally offset in time.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "offset_frames": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_shape",
+    "description": "Add a shape (rect, ellipse, polygon, star, path) as a new group inside an existing shape layer, on top of its other shapes. 'shape' may name a group to add into. Position is in layer space.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "rect",
+            "ellipse",
+            "polygon",
+            "star",
+            "path"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "Centre in scene coordinates (defaults to the scene centre)"
+        },
+        "size": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "Width and height for rect/ellipse (default 100×100)"
+        },
+        "roundness": {
+          "type": "number",
+          "description": "Corner radius (rect) or point roundness % (star/polygon)"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Outer radius for star/polygon (default 50)"
+        },
+        "inner_radius": {
+          "type": "number",
+          "description": "Inner radius for star (default radius/2)"
+        },
+        "points": {
+          "description": "Star/polygon point count, or path vertices [[x,y],...] relative to position"
+        },
+        "path": {
+          "type": "object",
+          "description": "Bezier {v, i, o, c} relative to position"
+        },
+        "closed": {
+          "type": "boolean"
+        },
+        "fill": {
+          "description": "Fill colour; null for no fill (default #c4c4c4)",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stroke": {
+          "description": "Stroke colour (default none)",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stroke_width": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_shape_item",
+    "description": "Delete a shape item (geometry, paint, modifier or whole group) from a shape layer.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        }
+      },
+      "required": [
+        "layer",
+        "shape"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_path",
+    "description": "Replace a path shape's bezier {v:[[x,y]...], i, o, c} (tangents relative to vertices). Animated paths get a keyframe at 'frame'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "path": {
+          "type": "object"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "shape",
+        "path"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_trim_path",
+    "description": "Add a trim-paths modifier (start/end in %, offset in degrees) affecting all paths before it in the layer or group. Animate 'end' 0→100 for a draw-on effect.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "start": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        },
+        "offset": {
+          "type": "number"
+        },
+        "individually": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_round_corners",
+    "description": "Add a round-corners modifier with the given radius to the layer or group.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "layer",
+        "radius"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_repeater",
+    "description": "Add a repeater that copies everything above it N times, each copy offset by position/rotation/scale, fading from start_opacity to end_opacity.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "copies": {
+          "type": "number",
+          "minimum": 1
+        },
+        "offset": {
+          "type": "number"
+        },
+        "position": {
+          "type": "array"
+        },
+        "rotation": {
+          "type": "number"
+        },
+        "scale": {
+          "type": "array"
+        },
+        "anchor": {
+          "type": "array"
+        },
+        "start_opacity": {
+          "type": "number"
+        },
+        "end_opacity": {
+          "type": "number"
+        },
+        "above": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "layer",
+        "copies"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_shape_item",
+    "description": "Update a shape item: animatable 'props' by friendly name (size, roundness, color, opacity, width, start, end, …) plus name, hidden, direction (1 or 3), fill_rule (non_zero|even_odd), line_cap (butt|round|square), line_join (miter|round|bevel), miter_limit, trim_mode (simultaneous|individual).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "props": {
+          "type": "object"
+        },
+        "name": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "direction": {
+          "type": "integer"
+        },
+        "fill_rule": {
+          "type": "string"
+        },
+        "line_cap": {
+          "type": "string"
+        },
+        "line_join": {
+          "type": "string"
+        },
+        "miter_limit": {
+          "type": "number"
+        },
+        "trim_mode": {
+          "type": "string"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "shape"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "reorder_shape",
+    "description": "Move a shape item to a new index within its parent list (0 = top).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "layer",
+        "shape",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_fill",
+    "description": "Set (or add) the solid fill of a shape layer or group: colour and opacity %. Animated colours get a keyframe at 'frame'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "color": {},
+        "opacity": {
+          "type": "number"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_stroke",
+    "description": "Set (or add) the stroke of a shape layer or group: colour, width, opacity, line_cap, line_join, dash [dash, gap].",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "color": {},
+        "width": {
+          "type": "number"
+        },
+        "opacity": {
+          "type": "number"
+        },
+        "line_cap": {
+          "type": "string",
+          "enum": [
+            "butt",
+            "round",
+            "square"
+          ]
+        },
+        "line_join": {
+          "type": "string",
+          "enum": [
+            "miter",
+            "round",
+            "bevel"
+          ]
+        },
+        "dash": {
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_gradient",
+    "description": "Give a shape layer or group a linear or radial gradient fill/stroke. stops: [{offset 0..1, color, opacity 0..1?}]. start/end points in layer space default to the shape's bounds.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "fill",
+            "stroke"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "linear",
+            "radial"
+          ]
+        },
+        "stops": {
+          "type": "array",
+          "minItems": 1
+        },
+        "start": {
+          "type": "array"
+        },
+        "end": {
+          "type": "array"
+        },
+        "highlight": {
+          "type": "number"
+        },
+        "angle": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "stops"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_paint",
+    "description": "Remove fills, strokes (solid or gradient) or both from a shape layer or group.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "description": "Layer id or unique name"
+        },
+        "shape": {
+          "type": "string",
+          "description": "Shape path, e.g. '0' or '0/2' (group children are nested)"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "fill",
+            "stroke",
+            "all"
+          ]
+        }
+      },
+      "required": [
+        "layer",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_mask",
+    "description": "Add a mask to a layer: rect/ellipse (position + size in layer space, default the layer bounds) or a bezier path. Modes: add, subtract, intersect, lighten, darken, difference, none.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "string",
+          "enum": [
+            "rect",
+            "ellipse",
+            "path"
+          ]
+        },
+        "position": {
+          "type": "array"
+        },
+        "size": {
+          "type": "array"
+        },
+        "path": {
+          "type": "object"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "inverted": {
+          "type": "boolean"
+        },
+        "opacity": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_mask",
+    "description": "Change a mask's mode, inversion, opacity, name or path (path keyframes via set_keyframe with shape 'mask:<i>').",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "inverted": {
+          "type": "boolean"
+        },
+        "opacity": {
+          "type": "number"
+        },
+        "path": {
+          "type": "object"
+        },
+        "name": {
+          "type": "string"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_mask",
+    "description": "Remove a mask from a layer.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "layer",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_effect",
+    "description": "Add a layer effect: drop_shadow (color, opacity %, direction °, distance, softness, shadow_only), gaussian_blur (blurriness, dimensions both|horizontal|vertical), fill (color, opacity %), tint (black, white, amount %), tritone (highlights, midtones, shadows, blend %).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "drop_shadow",
+            "gaussian_blur",
+            "fill",
+            "tint",
+            "tritone"
+          ]
+        },
+        "params": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "layer",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_effect",
+    "description": "Update parameters of a layer effect by index (see list_effects). Animated parameters get a keyframe at 'frame'; 'enabled' toggles the effect.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "params": {
+          "type": "object"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_effect",
+    "description": "Remove a layer effect by index.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "layer",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "list_effects",
+    "description": "List a layer's effects with their parameters.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "create_text",
+    "description": "Create a text layer. Position is the text anchor (baseline centre for centred text); give 'box' [w,h] for wrapped paragraph text.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "font": {
+          "type": "string",
+          "description": "Font name (registered fonts; default Poppins-Regular)"
+        },
+        "font_size": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "color": {
+          "description": "Fill colour"
+        },
+        "stroke_color": {
+          "description": "Stroke colour (null removes)"
+        },
+        "stroke_width": {
+          "type": "number"
+        },
+        "justify": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "tracking": {
+          "type": "number",
+          "description": "Letter spacing in 1/1000 em"
+        },
+        "line_height": {
+          "type": "number"
+        },
+        "caps": {
+          "type": "string",
+          "enum": [
+            "regular",
+            "all_caps",
+            "small_caps"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "box": {
+          "type": "array"
+        },
+        "scene": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_text",
+    "description": "Change a text layer's content (use \\r or \\n for line breaks).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "frame": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_text_style",
+    "description": "Change font, size, colours, stroke, justification, tracking, line height or caps of a text layer.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "font": {
+          "type": "string",
+          "description": "Font name (registered fonts; default Poppins-Regular)"
+        },
+        "font_size": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "color": {
+          "description": "Fill colour"
+        },
+        "stroke_color": {
+          "description": "Stroke colour (null removes)"
+        },
+        "stroke_width": {
+          "type": "number"
+        },
+        "justify": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "tracking": {
+          "type": "number",
+          "description": "Letter spacing in 1/1000 em"
+        },
+        "line_height": {
+          "type": "number"
+        },
+        "caps": {
+          "type": "string",
+          "enum": [
+            "regular",
+            "all_caps",
+            "small_caps"
+          ]
+        },
+        "layer": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layer"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "list_slots",
+    "description": "List slots (themeable properties) of the active animation with type, current value and how many properties are bound.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "create_slot",
+    "description": "Expose a property as a themeable slot (dotLottie themes override slots). Binds the property and records its current value as the slot default.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "string"
+        },
+        "property": {
+          "type": "string"
+        },
+        "slot_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layer",
+        "property"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "unlink_slot",
+    "description": "Unbind a property from its slot (the slot is deleted when nothing else uses it).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "string"
+        },
+        "property": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "layer",
+        "property"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_slot_value",
+    "description": "Change a slot's default value; every bound property updates.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "slot_id": {
+          "type": "string"
+        },
+        "value": {}
+      },
+      "required": [
+        "slot_id",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "list_themes",
+    "description": "List project themes with their rule counts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "add_theme",
+    "description": "Create a theme (a set of slot overrides exported to the dotLottie t/ folder).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_theme_rule",
+    "description": "Set (or with remove=true delete) a theme's override for one slot. Give 'value', or 'keyframes' [{frame, value}] for an animated override.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theme": {
+          "type": "string"
+        },
+        "slot_id": {
+          "type": "string"
+        },
+        "value": {},
+        "keyframes": {
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        },
+        "remove": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "theme",
+        "slot_id"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_theme",
+    "description": "Delete a theme.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theme": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "theme"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "select_theme",
+    "description": "Preview the animation with a theme applied (null for no theme).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theme": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "theme"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "list_segments",
+    "description": "List named segments (markers) with start and end frames. State machine playback states play segments by name.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "add_segment",
+    "description": "Add a named segment (marker) from 'start' to 'end' frame.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_segment",
+    "description": "Rename or retime a segment.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "new_name": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_segment",
+    "description": "Delete a segment.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "list_state_machines",
+    "description": "List the project's state machines.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "add_state_machine",
+    "description": "Create an empty state machine. Returns its id.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_state_machine",
+    "description": "Delete a state machine.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        }
+      },
+      "required": [
+        "machine"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "rename_state_machine",
+    "description": "Rename a state machine.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "machine",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "read_state_machine",
+    "description": "Return a state machine as dotLottie spec JSON (initial, states, interactions, inputs).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        }
+      },
+      "required": [
+        "machine"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": false
+  },
+  {
+    "name": "add_state",
+    "description": "Add a state: a playback state (plays the animation or a named segment with loop/mode/speed) or the single global state (type 'global') whose transitions are checked from any state. The first playback state becomes initial.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "animation": {
+          "type": "string",
+          "description": "Animation id (empty = the active animation)"
+        },
+        "segment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Segment (marker) name to play"
+        },
+        "loop": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "loop_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "autoplay": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "final": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "mode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "forward",
+            "reverse",
+            "bounce",
+            "reverse_bounce",
+            null
+          ]
+        },
+        "speed": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "background": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entry_actions": {
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "exit_actions": {
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "position": {
+          "type": "array",
+          "description": "Node position in the graph editor"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "playback",
+            "global"
+          ]
+        }
+      },
+      "required": [
+        "machine",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_state",
+    "description": "Change a state's settings (null removes an optional field). Renaming updates transitions, interactions and the initial state.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "animation": {
+          "type": "string",
+          "description": "Animation id (empty = the active animation)"
+        },
+        "segment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Segment (marker) name to play"
+        },
+        "loop": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "loop_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "autoplay": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "final": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "mode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "forward",
+            "reverse",
+            "bounce",
+            "reverse_bounce",
+            null
+          ]
+        },
+        "speed": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "background": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entry_actions": {
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "exit_actions": {
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "position": {
+          "type": "array",
+          "description": "Node position in the graph editor"
+        },
+        "new_name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "machine",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_state",
+    "description": "Delete a state and every transition/interaction that refers to it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "machine",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "set_initial_state",
+    "description": "Choose the state the machine starts in.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "machine",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_transition",
+    "description": "Add a transition from one state to another, optionally guarded by input conditions and tweened over a duration.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "instant",
+            "tweened"
+          ]
+        },
+        "duration": {
+          "type": "number",
+          "description": "Seconds (tweened)"
+        },
+        "easing": {
+          "description": "Preset name or [x1,y1,x2,y2] (tweened)"
+        },
+        "guards": {
+          "type": "array",
+          "description": "[{input, condition: equal|not_equal|greater_than|greater_than_or_equal|less_than|less_than_or_equal, value (or \"$otherInput\")}] — all must pass; event inputs need only {input}"
+        }
+      },
+      "required": [
+        "machine",
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_transition",
+    "description": "Update the transition at 'index' in state 'from'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "instant",
+            "tweened"
+          ]
+        },
+        "duration": {
+          "type": "number",
+          "description": "Seconds (tweened)"
+        },
+        "easing": {
+          "description": "Preset name or [x1,y1,x2,y2] (tweened)"
+        },
+        "guards": {
+          "type": "array",
+          "description": "[{input, condition: equal|not_equal|greater_than|greater_than_or_equal|less_than|less_than_or_equal, value (or \"$otherInput\")}] — all must pass; event inputs need only {input}"
+        }
+      },
+      "required": [
+        "machine",
+        "from",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_transition",
+    "description": "Delete the transition at 'index' in state 'from'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "from": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "machine",
+        "from",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_input",
+    "description": "Add an input variable: boolean, numeric, string or event (events have no value).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "boolean",
+            "numeric",
+            "string",
+            "event"
+          ]
+        },
+        "value": {}
+      },
+      "required": [
+        "machine",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_input",
+    "description": "Rename an input or change its type/default value. Renames update guards and actions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "new_name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {}
+      },
+      "required": [
+        "machine",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_input",
+    "description": "Delete an input along with guards and actions that use it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "machine",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "add_interaction",
+    "description": "Wire a user/playback event (Click, PointerDown/Up/Enter/Exit/Move on an optional layer, OnComplete/OnLoopComplete of a state) to actions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Click",
+            "PointerDown",
+            "PointerUp",
+            "PointerEnter",
+            "PointerExit",
+            "PointerMove",
+            "OnComplete",
+            "OnLoopComplete"
+          ]
+        },
+        "layer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Layer name the pointer interaction is limited to"
+        },
+        "state": {
+          "type": "string",
+          "description": "State name (OnComplete / OnLoopComplete)"
+        },
+        "actions": {
+          "type": "array",
+          "description": "[{type: toggle|increment|decrement|set_boolean|set_numeric|set_string|fire|reset|set_frame|set_progress|set_theme|open_url|fire_custom_event, input, value, url, target}]"
+        }
+      },
+      "required": [
+        "machine",
+        "type",
+        "actions"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "update_interaction",
+    "description": "Update the interaction at 'index'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Click",
+            "PointerDown",
+            "PointerUp",
+            "PointerEnter",
+            "PointerExit",
+            "PointerMove",
+            "OnComplete",
+            "OnLoopComplete"
+          ]
+        },
+        "layer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Layer name the pointer interaction is limited to"
+        },
+        "state": {
+          "type": "string",
+          "description": "State name (OnComplete / OnLoopComplete)"
+        },
+        "actions": {
+          "type": "array",
+          "description": "[{type: toggle|increment|decrement|set_boolean|set_numeric|set_string|fire|reset|set_frame|set_progress|set_theme|open_url|fire_custom_event, input, value, url, target}]"
+        }
+      },
+      "required": [
+        "machine",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "remove_interaction",
+    "description": "Delete the interaction at 'index'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "description": "State machine id"
+        },
+        "index": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "machine",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "import_svg",
+    "description": "Import SVG markup as a new editable shape layer (paths, fills, strokes and gradients), centred in the scene unless a position is given.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "svg": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array"
+        },
+        "scene": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "svg"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "import_lottie",
+    "description": "Import another Lottie animation (JSON string or object) as a nested scene layer; its assets are merged with remapped ids.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "json": {},
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "json"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "import_image",
+    "description": "Embed a PNG or JPEG (data: URL) as an image asset and add an image layer centred in the scene.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string",
+          "description": "data:image/png;base64,…"
+        },
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "apply_motion_preset",
+    "description": "Animate a layer with a preset (fade_in/out, scale_in/out, pop, slide_in/out_left/right/up/down, spin, bounce, pulse, shake, wiggle, float, blink) starting at start_frame for duration_frames. Values are relative to the layer's current transform; 'intensity' scales distances/angles.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "preset": {
+          "type": "string",
+          "enum": [
+            "fade_in",
+            "fade_out",
+            "scale_in",
+            "scale_out",
+            "pop",
+            "slide_in_left",
+            "slide_in_right",
+            "slide_in_up",
+            "slide_in_down",
+            "slide_out_left",
+            "slide_out_right",
+            "slide_out_up",
+            "slide_out_down",
+            "spin",
+            "bounce",
+            "pulse",
+            "shake",
+            "wiggle",
+            "float",
+            "blink"
+          ]
+        },
+        "start_frame": {
+          "type": "number"
+        },
+        "duration_frames": {
+          "type": "number"
+        },
+        "intensity": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layer",
+        "preset"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "stagger_layers",
+    "description": "Apply the same motion preset to several layers, each starting 'delay_frames' after the previous (in the order given).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preset": {
+          "type": "string",
+          "enum": [
+            "fade_in",
+            "fade_out",
+            "scale_in",
+            "scale_out",
+            "pop",
+            "slide_in_left",
+            "slide_in_right",
+            "slide_in_up",
+            "slide_in_down",
+            "slide_out_left",
+            "slide_out_right",
+            "slide_out_up",
+            "slide_out_down",
+            "spin",
+            "bounce",
+            "pulse",
+            "shake",
+            "wiggle",
+            "float",
+            "blink"
+          ]
+        },
+        "start_frame": {
+          "type": "number"
+        },
+        "delay_frames": {
+          "type": "number"
+        },
+        "duration_frames": {
+          "type": "number"
+        },
+        "intensity": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "layers",
+        "preset"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  }
+]
