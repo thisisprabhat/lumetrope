@@ -215,3 +215,79 @@ impl Default for Engine {
         Self::new()
     }
 }
+
+// ---- media export (GIF / animated WebP / WebM container) ----
+
+use lumetrope_core::media;
+
+fn raster_opts(transparent: bool, background: &[u8], matte: &[u8], alpha_threshold: u8) -> media::RasterOptions {
+    let rgb = |c: &[u8], d: [u8; 3]| if c.len() >= 3 { [c[0], c[1], c[2]] } else { d };
+    media::RasterOptions { transparent, background: rgb(background, [255, 255, 255]), matte: rgb(matte, [255, 255, 255]), alpha_threshold }
+}
+
+/// Streams straight-alpha RGBA frames into an animated GIF.
+#[wasm_bindgen]
+pub struct GifExporter {
+    inner: media::GifEncoder,
+}
+
+#[wasm_bindgen]
+impl GifExporter {
+    #[wasm_bindgen(constructor)]
+    pub fn new(w: u16, h: u16, fps: f64, transparent: bool, background: &[u8], matte: &[u8], alpha_threshold: u8) -> Result<GifExporter, JsValue> {
+        media::GifEncoder::new(w, h, fps, raster_opts(transparent, background, matte, alpha_threshold)).map(|inner| GifExporter { inner }).map_err(err)
+    }
+
+    pub fn push(&mut self, rgba: &[u8]) -> Result<(), JsValue> {
+        self.inner.push(rgba).map_err(err)
+    }
+
+    pub fn finish(self) -> Result<Vec<u8>, JsValue> {
+        self.inner.finish().map_err(err)
+    }
+}
+
+/// Streams straight-alpha RGBA frames into a lossless animated WebP.
+#[wasm_bindgen]
+pub struct WebpExporter {
+    inner: media::WebpEncoder,
+}
+
+#[wasm_bindgen]
+impl WebpExporter {
+    #[wasm_bindgen(constructor)]
+    pub fn new(w: u32, h: u32, fps: f64, transparent: bool, background: &[u8]) -> WebpExporter {
+        WebpExporter { inner: media::WebpEncoder::new(w, h, fps, raster_opts(transparent, background, &[], 128)) }
+    }
+
+    pub fn push(&mut self, rgba: &[u8]) -> Result<(), JsValue> {
+        self.inner.push(rgba).map_err(err)
+    }
+
+    pub fn finish(self) -> Result<Vec<u8>, JsValue> {
+        self.inner.finish().map_err(err)
+    }
+}
+
+/// Writes WebCodecs-encoded VP8/VP9 frames (plus an optional alpha stream) into WebM.
+#[wasm_bindgen]
+pub struct WebmWriter {
+    inner: media::WebmMuxer,
+}
+
+#[wasm_bindgen]
+impl WebmWriter {
+    #[wasm_bindgen(constructor)]
+    pub fn new(w: u32, h: u32, vp9: bool, alpha: bool) -> WebmWriter {
+        WebmWriter { inner: media::WebmMuxer::new(w, h, if vp9 { media::Codec::Vp9 } else { media::Codec::Vp8 }, alpha) }
+    }
+
+    /// `alpha` is empty when the file has no alpha stream.
+    pub fn push(&mut self, data: &[u8], alpha: &[u8], key: bool, ts_ms: f64) {
+        self.inner.push(data, if alpha.is_empty() { None } else { Some(alpha) }, key, ts_ms);
+    }
+
+    pub fn finish(self, duration_ms: f64) -> Vec<u8> {
+        self.inner.finish(duration_ms)
+    }
+}

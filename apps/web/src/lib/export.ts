@@ -1,7 +1,7 @@
-export type ExportFormat = "json" | "lottie";
+export type ExportFormat = "json" | "lottie" | "gif" | "webp" | "webm";
 
 export function exportFileName(name: string, format: ExportFormat): string {
-  const base = name.trim().replace(/\.(json|lottie)$/i, "").replace(/[\\/:*?"<>|]+/g, "-").trim() || "animation";
+  const base = name.trim().replace(/\.(json|lottie|gif|webp|webm)$/i, "").replace(/[\\/:*?"<>|]+/g, "-").trim() || "animation";
   return `${base}.${format}`;
 }
 

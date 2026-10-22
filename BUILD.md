@@ -230,6 +230,10 @@ To sign and notarize, set the usual Tauri environment variables (`APPLE_SIGNING_
 `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` on macOS; a certificate thumbprint in
 `bundle.windows.certificateThumbprint` on Windows). See Tauri's distribution guide.
 
+**Video export.** GIF and WebP are encoded in the WebAssembly engine and work everywhere. WebM
+uses the system webview's WebCodecs VP9/VP8 encoder: Chrome, Edge and the Windows app (WebView2)
+have one; where a webview doesn't, the export dialog disables WebM and says why.
+
 **File access.** The app can only read or write files you pick in its native Open/Save dialogs;
 no folder is opened up front (see `apps/desktop/src-tauri/capabilities/default.json`).
 

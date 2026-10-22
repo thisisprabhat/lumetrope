@@ -2798,3 +2798,84 @@ textarea {
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ media export */
+
+.format-cards.five {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.format-card:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.export-preview.solid {
+  background-image: none;
+}
+
+.export-options {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-1);
+}
+
+.export-options input[type="color"] {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: none;
+}
+
+.chip-btn.on {
+  border-color: var(--lume);
+  color: var(--lume);
+}
+
+.export-progress {
+  display: grid;
+  gap: 4px;
+}
+
+.export-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-3);
+  overflow: hidden;
+}
+
+.export-bar span {
+  display: block;
+  height: 100%;
+  background: var(--lume);
+  box-shadow: 0 0 8px var(--lume-glow);
+  transition: width 0.15s;
+}
+
+.export-modal {
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.export-modal .export-preview {
+  height: clamp(120px, 24vh, 230px);
+  flex-shrink: 0;
+}
+
+.export-modal .modal-body {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.export-modal .modal-head,
+.export-modal .modal-foot {
+  flex-shrink: 0;
+}

@@ -15,3 +15,5 @@ usvg = { version = "0.45", default-features = false }
 zip = { version = "2.2", default-features = false, features = ["deflate"] }
 sha2 = { version = "0.10", default-features = false }
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+gif = { version = "0.13", default-features = false, features = ["color_quant", "std"] }
+image-webp = "0.2"

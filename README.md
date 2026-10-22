@@ -30,6 +30,13 @@ and Linux (Tauri).
 - Live preview: interact with the real animation, drive inputs, watch the event log.
 - Themes and slots, exported to dotLottie `t/`.
 
+**Export**
+- dotLottie (everything, including state machines and themes) and Lottie JSON.
+- Animated **GIF**, **WebP** and **WebM** with transparency: GIF uses a transparent palette index
+  (soft edges blend into an edge-matte colour you choose), WebP is lossless with a full alpha
+  channel, WebM is VP9/VP8 with an alpha stream. Pick size, frame rate, a segment or the whole
+  animation, or flatten onto a background colour instead.
+
 **Projects & files**
 - Opens on a dashboard of every project you've created, opened, edited, previewed or exported,
   with thumbnails, search, filters and quick-start canvases and samples.

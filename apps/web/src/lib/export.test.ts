@@ -7,6 +7,8 @@ describe("export helpers", () => {
     expect(exportFileName("a/b:c", "lottie")).toBe("a-b-c.lottie");
     expect(exportFileName("  ", "lottie")).toBe("animation.lottie");
     expect(exportFileName("x.lottie", "lottie")).toBe("x.lottie");
+    expect(exportFileName("x.gif", "gif")).toBe("x.gif");
+    expect(exportFileName("loop.webm", "webp")).toBe("loop.webp");
   });
   it("formats sizes", () => {
     expect(formatBytes(512)).toBe("512 B");
