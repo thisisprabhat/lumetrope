@@ -64,7 +64,8 @@ pnpm dev           # http://localhost:5173
 ```
 
 Open a file with **File ▸ Open**, drop a `.json`, `.lottie` or `.svg` on the canvas, or deep-link:
-`http://localhost:5173/?open=/samples/shapes.json`.
+`http://localhost:5173/?open=/samples/shapes.json`. Demo files, including interactive dotLottie
+buttons, are in [`samples/`](samples/).
 
 ### Desktop app (macOS)
 
