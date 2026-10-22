@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { keyLabel } from "../lib/keys";
 
 export interface MenuItem {
   label: string;
@@ -46,7 +47,7 @@ export function Menu({ trigger, items, align = "left" }: { trigger: ReactNode; i
               >
                 <span className="menu-check">{it.checked ? "✓" : ""}</span>
                 <span className="menu-label">{it.label}</span>
-                {it.shortcut && <span className="menu-shortcut num">{it.shortcut}</span>}
+                {it.shortcut && <span className="menu-shortcut num">{keyLabel(it.shortcut)}</span>}
               </button>
             ),
           )}

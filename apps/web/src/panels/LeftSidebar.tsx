@@ -79,7 +79,7 @@ function LayerRow({ l, index }: { l: LayerNode; index: number }) {
         if (id && id !== l.id) act("reorder_layer", { layer: id, index: where === "above" ? index : index + 1 });
       }}
       onClick={(e) => {
-        if (e.shiftKey || e.metaKey) select(sel ? selection.filter((x) => x !== l.id) : [...selection, l.id]);
+        if (e.shiftKey || e.metaKey || e.ctrlKey) select(sel ? selection.filter((x) => x !== l.id) : [...selection, l.id]);
         else select([l.id]);
       }}
       onDoubleClick={() => (l.type === "precomp" && l.scene ? setScene(l.scene) : setRenaming(true))}

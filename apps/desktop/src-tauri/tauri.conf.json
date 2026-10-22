@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../../web/dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "pnpm --dir ../.. --filter @lumetrope/web build"
+    "beforeDevCommand": "pnpm --dir ../.. dev",
+    "beforeBuildCommand": "pnpm --dir ../.. build"
   },
   "app": {
     "windows": [
@@ -27,11 +27,46 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app"],
+    "targets": "all",
     "category": "GraphicsAndDesign",
     "shortDescription": "Open-source Lottie & dotLottie animation editor",
     "copyright": "MIT licensed",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
-    "macOS": { "minimumSystemVersion": "11.0" }
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    },
+    "publisher": "Lumetrope contributors",
+    "longDescription": "Lumetrope is an open-source creator and editor for Lottie and dotLottie animations, with interactive state machines, local version history and an MCP server for AI agents.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0"
+        ]
+      },
+      "rpm": {
+        "depends": [
+          "webkit2gtk4.1",
+          "gtk3"
+        ]
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
   }
 }

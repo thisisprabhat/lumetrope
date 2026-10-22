@@ -3,6 +3,7 @@ import { useLayerJson, useSceneInfo, type LayerNode } from "../doc";
 import { useEditor } from "../store";
 import { Icon } from "../components/Icon";
 import { NumberField, PropRow, Section, Select, Toggle } from "../ui/controls";
+import { keyLabel } from "../lib/keys";
 
 const BLEND = ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color_dodge", "color_burn", "hard_light", "soft_light", "difference", "exclusion", "hue", "saturation", "color", "luminosity", "add"];
 const ANCHORS = ["top_left", "top", "top_right", "left", "center", "right", "bottom_left", "bottom", "bottom_right"];
@@ -40,7 +41,7 @@ export function LayerHeader({ layer }: { layer: LayerNode }) {
     <div className="layer-header">
       <span className={`type-badge t-${layer.type}`}>{layer.type}</span>
       <input className="text-input layer-name" key={layer.id + layer.name} defaultValue={layer.name} onBlur={(e) => e.target.value !== layer.name && act("rename_layer", { layer: layer.id, name: e.target.value })} />
-      <button className="icon-btn" data-tip="Duplicate (⌘D)" onClick={() => {
+      <button className="icon-btn" data-tip={`Duplicate (${keyLabel("⌘D")})`} onClick={() => {
         const r = act<{ id: string }>("duplicate_layer", { layer: layer.id });
         if (r) select([r.id]);
       }}>

@@ -1,0 +1,15 @@
+# Normalise text to LF in the repository so Windows checkouts build identically.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets
+*.lottie binary
+*.png binary
+*.icns binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.wasm binary

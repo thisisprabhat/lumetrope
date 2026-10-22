@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { engine, readInfo, type Info } from "./engine";
 import { centerCamera, fitCamera, nextStep, zoomAt, type Camera, type WheelMode } from "./lib/camera";
 import { clampFrame } from "./lib/time";
+import { canvasFilterSupported, defaultRenderer } from "./platform";
 
 export type Mode = "animate" | "state" | "preview";
 export type Tool = "select" | "rect" | "ellipse" | "polygon" | "star" | "pen" | "text" | "hand";
@@ -111,7 +112,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   camera: { zoom: 1, x: 0, y: 0 },
   viewport: { w: 0, h: 0 },
   wheelMode: (localStorageGet("lumetrope.wheelMode") as WheelMode) || "auto",
-  renderer: localStorageGet("lumetrope.renderer") === "cpu" ? "cpu" : "gpu",
+  renderer: defaultRenderer(localStorageGet("lumetrope.renderer"), canvasFilterSupported()),
   setRenderer: (renderer) => {
     localStorageSet("lumetrope.renderer", renderer);
     set({ renderer });

@@ -6,6 +6,7 @@ import { useEditor, type Mode, type Tool } from "../store";
 import { Icon } from "./Icon";
 import { Menu } from "./Menu";
 import { McpBadge } from "./McpDialog";
+import { keyLabel } from "../lib/keys";
 
 const TOOLS: { id: Tool; icon: string; tip: string }[] = [
   { id: "select", icon: "select", tip: "Select (V)" },
@@ -77,10 +78,10 @@ export function TopBar() {
         ]}
       />
       <div className="sep" />
-      <button className="icon-btn" data-tip="Undo (⌘Z)" disabled={!canUndo} onClick={commands.undo}>
+      <button className="icon-btn" data-tip={`Undo (${keyLabel("⌘Z")})`} disabled={!canUndo} onClick={commands.undo}>
         <Icon name="undo" />
       </button>
-      <button className="icon-btn" data-tip="Redo (⇧⌘Z)" disabled={!canRedo} onClick={commands.redo}>
+      <button className="icon-btn" data-tip={`Redo (${keyLabel("⇧⌘Z")})`} disabled={!canRedo} onClick={commands.redo}>
         <Icon name="redo" />
       </button>
       <div className="sep" />
@@ -90,7 +91,7 @@ export function TopBar() {
         </button>
       ))}
       <div className="sep" />
-      <button className="icon-btn" data-tip="Zoom out (⌘−)" onClick={() => zoomStep(-1)}>
+      <button className="icon-btn" data-tip={`Zoom out (${keyLabel("⌘−")})`} onClick={() => zoomStep(-1)}>
         <Icon name="zoomOut" />
       </button>
       <Menu
@@ -104,10 +105,10 @@ export function TopBar() {
           ...[0.5, 1, 2, 4, 8].map((z) => ({ label: `${z * 100}%`, shortcut: z === 1 ? "⇧0" : undefined, onSelect: () => zoomTo(z), checked: Math.abs(camera.zoom - z) < 1e-3 })),
         ]}
       />
-      <button className="icon-btn" data-tip="Zoom in (⌘+)" onClick={() => zoomStep(1)}>
+      <button className="icon-btn" data-tip={`Zoom in (${keyLabel("⌘+")})`} onClick={() => zoomStep(1)}>
         <Icon name="zoomIn" />
       </button>
-      <button className="icon-btn" data-tip="Zoom to fit (⇧1)" onClick={commands.fit}>
+      <button className="icon-btn" data-tip={`Zoom to fit (${keyLabel("⇧1")})`} onClick={commands.fit}>
         <Icon name="fit" />
       </button>
       <div className="spacer" />

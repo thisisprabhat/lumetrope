@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { commands } from "../commands";
 import { openContextMenu, useContextMenu, SEP, type CtxItem } from "../contextMenu";
 import { useEditor } from "../store";
+import { keyLabel } from "../lib/keys";
 
 function MenuList({ items, x, y, onDone, depth = 0, flipX }: { items: CtxItem[]; x: number; y: number; onDone: () => void; depth?: number; flipX?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -64,7 +65,7 @@ function MenuList({ items, x, y, onDone, depth = 0, flipX }: { items: CtxItem[];
           >
             <span className="menu-check">{it.checked ? "✓" : ""}</span>
             <span className="menu-label">{it.label}</span>
-            {it.shortcut && <span className="menu-shortcut num">{it.shortcut}</span>}
+            {it.shortcut && <span className="menu-shortcut num">{keyLabel(it.shortcut)}</span>}
             {it.submenu && <span className="menu-shortcut">›</span>}
           </button>
         ),

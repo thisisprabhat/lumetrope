@@ -54,3 +54,14 @@ export async function saveFile(name: string, data: BlobPart, mime: string): Prom
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   return true;
 }
+
+/** Does this webview's Canvas2D support `ctx.filter` (blur, shadows, luma mattes on the GPU path)? */
+export function canvasFilterSupported(): boolean {
+  return typeof CanvasRenderingContext2D !== "undefined" && "filter" in CanvasRenderingContext2D.prototype;
+}
+
+/** A saved choice wins; otherwise GPU where Canvas2D filters work, else the exact CPU renderer. */
+export function defaultRenderer(saved: string | null, canvasFilter: boolean): "gpu" | "cpu" {
+  if (saved === "gpu" || saved === "cpu") return saved;
+  return canvasFilter ? "gpu" : "cpu";
+}
