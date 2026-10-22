@@ -5,7 +5,7 @@
   "scripts": {
     "wasm": "wasm-pack build crates/wasm --target web --release --out-dir ../../apps/web/src/wasm",
     "dev": "pnpm --filter @lumetrope/web dev",
-    "build": "pnpm wasm && pnpm --filter @lumetrope/web build",
+    "build": "pnpm wasm && pnpm --filter lumetrope-mcp build && pnpm --filter @lumetrope/web build",
     "test": "cargo test -p lumetrope-core && pnpm -r test"
   },
   "packageManager": "pnpm@12.11.2",

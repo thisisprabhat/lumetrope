@@ -5,6 +5,7 @@ import { call, engine, readInfo } from "../engine";
 import { CanvasRenderer } from "../gpu/CanvasRenderer";
 import { commitNow } from "../panels/HistoryPanel";
 import { useEditor, type SmSnapshot } from "../store";
+import { createProject } from "../persist";
 
 const st = () => useEditor.getState();
 
@@ -45,6 +46,9 @@ function requirePreview() {
 }
 
 export async function runTool(tool: string, args: Record<string, any>): Promise<unknown> {
+  // An agent working while the dashboard is up gets a project to edit, in view.
+  if (!st().project) await createProject();
+  if (st().view !== "editor") st().setView("editor");
   switch (tool) {
     case "get_editor_state": {
       const s = st();

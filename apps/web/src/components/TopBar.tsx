@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { commands } from "../commands";
 import { relativeTime } from "../lib/history";
-import { persist } from "../persist";
+import { library } from "../persist";
+import { lastActivity, sortProjects } from "../library/activity";
 import { useEditor, type Mode, type Tool } from "../store";
 import { Icon } from "./Icon";
 import { Menu } from "./Menu";
@@ -30,21 +31,25 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <div className="wordmark">
+      <button className="wordmark home-btn" onClick={commands.home} data-tip="All projects (Home)">
         <svg className="disc" viewBox="0 0 20 20" aria-hidden>
           <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3.2" strokeDasharray="5.5 5.5" />
         </svg>
         Lumetrope
-      </div>
+      </button>
       <Menu
         trigger={<span className="menu-word">File</span>}
         items={[
-          { label: "New project", onSelect: commands.newProject },
+          { label: "All projects (Home)", onSelect: commands.home },
+          { separator: true, label: "" },
+          { label: "New project", shortcut: "⌘N", onSelect: commands.newProject },
           { label: "Open…", shortcut: "⌘O", onSelect: () => void commands.open() },
           { label: "Import SVG, Lottie, image or font…", onSelect: () => void commands.import() },
           { separator: true, label: "" },
-          { label: "Save version", shortcut: "⇧⌘S", onSelect: commands.saveVersion },
-          { label: "Download project (.lottie)", shortcut: "⌘S", onSelect: commands.saveProject },
+          { label: "Save", shortcut: "⌘S", onSelect: commands.save },
+          { label: "Save as…", shortcut: "⇧⌘S", onSelect: commands.saveAs },
+          { label: "Save version", shortcut: "⌥⌘S", onSelect: commands.saveVersion },
+          { separator: true, label: "" },
           { label: "Export…", shortcut: "⌘E", onSelect: commands.openExport },
           { label: "Quick export Lottie JSON", onSelect: commands.exportJson },
         ]}
@@ -131,12 +136,12 @@ export function TopBar() {
 }
 
 function RecentMenu() {
-  const [items, setItems] = useState<{ id: string; name: string; updated: number }[]>([]);
+  const [items, setItems] = useState<{ id: string; name: string; at: number }[]>([]);
   const savedAt = useEditor((s) => s.savedAt);
   useEffect(() => {
-    persist
-      .all()
-      .then((r) => setItems(r.slice(0, 12)))
+    library
+      .list()
+      .then((r) => setItems(sortProjects(r, "recent").slice(0, 12).map((m) => ({ id: m.id, name: m.name, at: lastActivity(m).at }))))
       .catch(() => setItems([]));
   }, [savedAt]);
   return (
@@ -144,7 +149,11 @@ function RecentMenu() {
       trigger={<span className="menu-word">Recent</span>}
       items={
         items.length
-          ? items.map((r) => ({ label: `${r.name} · ${relativeTime(r.updated)}`, onSelect: () => void commands.openRecent(r.id) }))
+          ? [
+              ...items.map((r) => ({ label: `${r.name} · ${relativeTime(r.at)}`, onSelect: () => commands.openRecent(r.id) })),
+              { separator: true, label: "" },
+              { label: "Show all projects…", onSelect: commands.home },
+            ]
           : [{ label: "No saved projects yet", disabled: true }]
       }
     />

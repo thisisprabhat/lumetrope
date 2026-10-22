@@ -11,7 +11,7 @@ let app: WebSocket | null = null;
 beforeAll(async () => {
   const transport = new StdioClientTransport({
     command: process.execPath,
-    args: [fileURLToPath(new URL("../dist/index.js", import.meta.url))],
+    args: [fileURLToPath(new URL("../dist/lumetrope-mcp.mjs", import.meta.url))],
     env: { ...process.env, LUMETROPE_MCP_PORT: String(port) } as Record<string, string>,
     stderr: "ignore",
   });

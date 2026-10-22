@@ -5,6 +5,7 @@ import { exportFileName, formatBytes, type ExportFormat } from "../lib/export";
 import { useEditor } from "../store";
 import { Icon } from "./Icon";
 import { CanvasRenderer } from "../gpu/CanvasRenderer";
+import { markExported } from "../persist";
 
 /** Export with live preview: Lottie JSON (active animation) or dotLottie (whole project). */
 export function ExportDialog({ onClose }: { onClose: () => void }) {
@@ -57,6 +58,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
     if (typeof payload === "string") return toast(payload, "error");
     download(exportFileName(name, format), payload, format === "json" ? "application/json" : "application/zip+dotlottie");
     toast(`Exported ${exportFileName(name, format)}`);
+    void markExported(format);
     onClose();
   };
 

@@ -20,6 +20,10 @@ const localSamples = {
 
 export default defineConfig({
   plugins: [react(), localSamples],
+  // Where `pnpm --filter lumetrope-mcp build` puts the single-file MCP server on
+  // this machine; the browser build shows it in the MCP dialog (the desktop app
+  // reports its own installed copy instead).
+  define: { __LUMETROPE_MCP_PATH__: JSON.stringify(resolve(__dirname, "../../packages/mcp/dist/lumetrope-mcp.mjs")) },
   server: { port: 5173, strictPort: false },
   build: { target: "es2022" },
   test: { environment: "node", include: ["src/**/*.test.ts"] },

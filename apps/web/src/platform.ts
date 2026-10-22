@@ -65,3 +65,12 @@ export function defaultRenderer(saved: string | null, canvasFilter: boolean): "g
   if (saved === "gpu" || saved === "cpu") return saved;
   return canvasFilter ? "gpu" : "cpu";
 }
+
+/** Path of the MCP server agents should launch: the desktop app's installed copy, or the repo build. */
+export async function mcpServerPath(): Promise<{ path: string; source: "app" | "build" }> {
+  if (isTauri()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    return { path: await invoke<string>("mcp_server_path"), source: "app" };
+  }
+  return { path: __LUMETROPE_MCP_PATH__, source: "build" };
+}

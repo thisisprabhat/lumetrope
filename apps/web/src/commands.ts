@@ -1,11 +1,10 @@
 // Editor commands shared by menus and keyboard shortcuts.
 import { act, query, redo, undo } from "./actions";
 import { engine, geometry, type Geometry } from "./engine";
-import { download, openFile, pickFile } from "./files";
+import { download, pickFile } from "./files";
 import { importFile } from "./panels/LeftSidebar";
 import { useEditor } from "./store";
-import { exportFileName } from "./lib/export";
-import { loadProject, newProjectId } from "./persist";
+import { createProject, goHome, openFromDisk, openProject, saveAs, saveToFile } from "./persist";
 import { commitNow } from "./panels/HistoryPanel";
 
 const st = () => useEditor.getState();
@@ -64,20 +63,13 @@ export const commands = {
     else if (ids.length > 1) act("stagger_layers", { layers: ids, preset, start_frame: frame, delay_frames: 4 });
   },
   newProject() {
-    engine().new_project(512, 512, 30, 90);
-    engine().vcs_reset();
-    useEditor.setState({ projectId: newProjectId() });
-    st().bumpHistory();
-    st().select([]);
-    st().setScene("root");
-    st().setFileName("Untitled");
-    st().setFrame(0);
-    st().refresh();
-    window.dispatchEvent(new Event("lumetrope:fit"));
+    void createProject();
   },
-  async open() {
-    const f = await pickFile();
-    if (f) await openFile(f);
+  open() {
+    return openFromDisk();
+  },
+  home() {
+    void goHome();
   },
   async import() {
     const f = await pickFile(".svg,.json,.png,.jpg,.jpeg,.ttf,.otf,.woff,.woff2");
@@ -87,21 +79,19 @@ export const commands = {
     download(`${st().fileName || "animation"}.json`, engine().export_lottie(), "application/json");
     st().toast("Exported Lottie JSON");
   },
-  /** Save the whole project as a dotLottie file (the native project format). */
-  saveProject() {
-    try {
-      download(exportFileName(st().fileName || "project", "lottie"), engine().export_dotlottie(), "application/zip+dotlottie");
-      st().toast("Saved project (.lottie)");
-    } catch (e) {
-      st().toast(String(e), "error");
-    }
+  /** ⌘S: write back to the project's file (or choose one). */
+  save() {
+    void saveToFile();
+  },
+  saveAs() {
+    void saveAs();
   },
   saveVersion() {
     st().setLeftTab("history");
     commitNow("");
   },
-  async openRecent(id: string) {
-    if (await loadProject(id)) st().toast("Opened from local library");
+  openRecent(id: string) {
+    void openProject(id);
   },
   openExport() {
     st().setExportOpen(true);

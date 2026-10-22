@@ -6,7 +6,7 @@
   "build": {
     "frontendDist": "../../web/dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "pnpm --dir ../.. dev",
+    "beforeDevCommand": "pnpm --dir ../.. --filter lumetrope-mcp build && pnpm --dir ../.. dev",
     "beforeBuildCommand": "pnpm --dir ../.. build"
   },
   "app": {
@@ -67,6 +67,9 @@
       "appimage": {
         "bundleMediaFramework": false
       }
+    },
+    "resources": {
+      "../../../packages/mcp/dist/lumetrope-mcp.mjs": "mcp/lumetrope-mcp.mjs"
     }
   }
 }

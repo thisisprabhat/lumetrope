@@ -30,6 +30,13 @@ and Linux (Tauri).
 - Live preview: interact with the real animation, drive inputs, watch the event log.
 - Themes and slots, exported to dotLottie `t/`.
 
+**Projects & files**
+- Opens on a dashboard of every project you've created, opened, edited, previewed or exported,
+  with thumbnails, search, filters and quick-start canvases and samples.
+- Remembers where files live: paths in the desktop app (access survives restarts), File System
+  Access handles in Chrome/Edge, a cached copy elsewhere. ⌘S writes back to the file, ⇧⌘S saves
+  as a new one; outside changes are picked up when you reopen and kept in version history.
+
 **Platform**
 - Rust engine compiled to WebAssembly: lenient Lottie model, keyframe evaluator, renderer
   (tiny-skia CPU path + a display-list path executed on the GPU through Canvas2D), state machine
@@ -85,12 +92,15 @@ libraries per OS are listed in [BUILD.md](BUILD.md).
 
 ```bash
 pnpm --filter lumetrope-mcp build
-claude mcp add lumetrope -- node "$(pwd)/packages/mcp/dist/index.js"
+claude mcp add lumetrope -- node "$(pwd)/packages/mcp/dist/lumetrope-mcp.mjs"
 ```
 
-(Windows PowerShell: `claude mcp add lumetrope -- node "$PWD\packages\mcp\dist\index.js"`.)
+(Windows PowerShell: `claude mcp add lumetrope -- node "$PWD\packages\mcp\dist\lumetrope-mcp.mjs"`.)
 
-Then in Lumetrope click the **MCP** badge and turn on **Local MCP**. Ask your agent to
+Easiest: click the **MCP** badge in Lumetrope. It shows the exact command and config text for
+your OS (Claude Code, Codex, Cursor, Claude Desktop) with the real server path; the desktop app
+installs its own copy of the server, so no repository checkout is needed. Then turn on
+**Local MCP**. Ask your agent to
 “read the scene and add a bouncing ball with a hover state machine”. The server listens on
 `ws://127.0.0.1:47321` (override with `LUMETROPE_MCP_PORT`) and only accepts local Lumetrope
 windows.
@@ -119,7 +129,8 @@ On Windows and Linux use Ctrl wherever ⌘ is shown; menus show the right labels
 | ⌘G | group into nested scene |
 | , . | previous / next frame |
 | ⌘+ ⌘− ⇧1 ⇧0 ⇧2 | zoom in/out, fit, 100%, selection |
-| ⇧⌘S ⌘S ⌘E | save version, download .lottie, export |
+| ⌘S ⇧⌘S ⌥⌘S | save to file, save as, save version |
+| ⌘N ⌘O ⌘E | new project, open, export |
 
 ## Clean-room note
 

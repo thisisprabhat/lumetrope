@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // lumetrope-mcp: stdio MCP server exposing Lumetrope's editing tools to AI agents.
-import { readFileSync } from "node:fs";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { Bridge, DEFAULT_PORT } from "./bridge.js";
 import { HOST_TOOLS } from "./hostTools.js";
+import catalogJson from "../catalog.json" with { type: "json" };
 
 const VERSION = "0.1.0";
 const log = (m: string) => process.stderr.write(`[lumetrope-mcp] ${m}\n`);
@@ -16,7 +16,7 @@ interface ToolDef {
   inputSchema: Record<string, unknown>;
 }
 
-const catalog: ToolDef[] = JSON.parse(readFileSync(new URL("../catalog.json", import.meta.url), "utf8"));
+const catalog = catalogJson as unknown as ToolDef[];
 const tools: ToolDef[] = [...catalog.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })), ...(HOST_TOOLS as unknown as ToolDef[])];
 const known = new Set(tools.map((t) => t.name));
 

@@ -3,6 +3,7 @@ import { engine, readInfo, type Info } from "./engine";
 import { centerCamera, fitCamera, nextStep, zoomAt, type Camera, type WheelMode } from "./lib/camera";
 import { clampFrame } from "./lib/time";
 import { canvasFilterSupported, defaultRenderer } from "./platform";
+import type { ProjectMeta } from "./library/db";
 
 export type Mode = "animate" | "state" | "preview";
 export type Tool = "select" | "rect" | "ellipse" | "polygon" | "star" | "pen" | "text" | "hand";
@@ -59,6 +60,11 @@ interface EditorState {
   webMcp: boolean;
   mcpHelpOpen: boolean;
   projectId: string;
+  /** Dashboard (home) or the editor. */
+  view: "home" | "editor";
+  setView: (v: "home" | "editor") => void;
+  /** Library entry of the open project (null until it has one). */
+  project: ProjectMeta | null;
   savedAt: number;
   historyTick: number;
   bumpHistory: () => void;
@@ -135,6 +141,9 @@ export const useEditor = create<EditorState>((set, get) => ({
   mcpHelpOpen: false,
   projectId: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `p${Date.now()}`,
   savedAt: 0,
+  view: "home",
+  setView: (view) => set({ view }),
+  project: null,
   historyTick: 0,
   bumpHistory: () => set({ historyTick: get().historyTick + 1 }),
   machine: null,

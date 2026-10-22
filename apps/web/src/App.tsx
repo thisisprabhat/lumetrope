@@ -7,7 +7,8 @@ import { Stage } from "./components/Stage";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
 import { openUrl } from "./files";
-import { loadProject, persist, scheduleSave } from "./persist";
+import { markPreviewed, scheduleSave } from "./persist";
+import { Dashboard } from "./components/Dashboard";
 import { LeftSidebar } from "./panels/LeftSidebar";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { Timeline } from "./panels/Timeline";
@@ -19,7 +20,7 @@ import { SmPointerOverlay } from "./sm/SmPointerOverlay";
 import { useSmPreview } from "./sm/useSmPreview";
 import { usePlayback } from "./usePlayback";
 
-let openedFromUrl = false;
+let started = false;
 
 export function App() {
   const refresh = useEditor((s) => s.refresh);
@@ -30,24 +31,33 @@ export function App() {
   useEffect(() => {
     refresh();
     const open = new URLSearchParams(location.search).get("open");
-    if (openedFromUrl) return;
-    openedFromUrl = true; // StrictMode runs effects twice in development
+    if (started) return;
+    started = true; // StrictMode runs effects twice in development
+    // Launch on the dashboard; ?open=/path deep-links straight into a file.
     if (open && open.startsWith("/")) void openUrl(open);
-    else
-      void persist
-        .all()
-        .then((recs) => recs[0] && loadProject(recs[0].id))
-        .catch(() => undefined);
   }, [refresh]);
   usePlayback();
   const revision = useEditor((s) => s.revision);
   const historyTick = useEditor((s) => s.historyTick);
   const fileName = useEditor((s) => s.fileName);
   useEffect(() => {
-    if (openedFromUrl) scheduleSave();
+    if (started) scheduleSave();
   }, [revision, historyTick, fileName]);
+  useEffect(() => {
+    if (mode === "preview") void markPreviewed();
+  }, [mode]);
+  const view = useEditor((s) => s.view);
   useSmPreview();
   useShortcuts();
+  if (view === "home")
+    return (
+      <>
+        <Dashboard />
+        <Toasts />
+        <ContextMenuHost />
+        {mcpHelpOpen && <McpDialog />}
+      </>
+    );
   return (
     <div className={`app mode-${mode}`}>
       <TopBar />

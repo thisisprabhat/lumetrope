@@ -7,6 +7,7 @@ import { PlayerBar } from "./PlayerBar";
 import { CanvasRenderer } from "../gpu/CanvasRenderer";
 import { openContextMenu } from "../contextMenu";
 import { canvasMenu } from "../menus";
+import { importFile } from "../panels/LeftSidebar";
 
 /**
  * Canvas stage. One viewport-sized canvas is rendered through the camera, so
@@ -212,11 +213,15 @@ export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode
         setDragging(true);
       }}
       onDragLeave={() => setDragging(false)}
-      onDrop={(e) => {
+      onDrop={async (e) => {
         e.preventDefault();
         setDragging(false);
         const f = e.dataTransfer.files[0];
-        if (f) void openFile(f);
+        if (!f) return;
+        if (!/\.(lottie|json)$/i.test(f.name)) return void importFile(f);
+        const item = [...e.dataTransfer.items].find((i) => i.kind === "file") as any;
+        const handle = item?.getAsFileSystemHandle ? await item.getAsFileSystemHandle().catch(() => null) : null;
+        void openFile(f, handle?.kind === "file" ? handle : undefined);
       }}
     >
       <div

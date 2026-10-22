@@ -236,23 +236,33 @@ no folder is opened up front (see `apps/desktop/src-tauri/capabilities/default.j
 ## 4. Build the MCP server
 
 ```bash
-pnpm --filter lumetrope-mcp build     # → packages/mcp/dist/index.js
+pnpm --filter lumetrope-mcp build     # → packages/mcp/dist/lumetrope-mcp.mjs
 ```
 
-Register it with your agent. Claude Code, macOS/Linux:
+The build is one self-contained file (dependencies and the tool catalogue are bundled), so it
+runs anywhere Node.js 20+ is installed. The desktop app ships it too and copies it on every launch
+to a fixed location, which its MCP dialog shows ready to paste:
+
+| OS | Installed server |
+|---|---|
+| macOS | `~/Library/Application Support/app.lumetrope.editor/mcp/lumetrope-mcp.mjs` |
+| Windows | `%APPDATA%\app.lumetrope.editor\mcp\lumetrope-mcp.mjs` |
+| Linux | `~/.local/share/app.lumetrope.editor/mcp/lumetrope-mcp.mjs` |
+
+Register the repository build with your agent. Claude Code, macOS/Linux:
 
 ```bash
-claude mcp add lumetrope -- node "$(pwd)/packages/mcp/dist/index.js"
+claude mcp add lumetrope -- node "$(pwd)/packages/mcp/dist/lumetrope-mcp.mjs"
 ```
 
 Claude Code, Windows PowerShell:
 
 ```powershell
-claude mcp add lumetrope -- node "$PWD\packages\mcp\dist\index.js"
+claude mcp add lumetrope -- node "$PWD\packages\mcp\dist\lumetrope-mcp.mjs"
 ```
 
 Any other MCP client takes the same command in its JSON config (`"command": "node"`,
-`"args": ["<absolute path>/packages/mcp/dist/index.js"]`). Then open Lumetrope (browser or
+`"args": ["<absolute path>/packages/mcp/dist/lumetrope-mcp.mjs"]`). Then open Lumetrope (browser or
 desktop), click the **MCP** badge and enable **Local MCP**. The server listens on
 `ws://127.0.0.1:47321`; set `LUMETROPE_MCP_PORT` to change it.
 

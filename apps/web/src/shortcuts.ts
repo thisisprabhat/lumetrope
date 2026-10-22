@@ -16,6 +16,12 @@ export function useShortcuts(): void {
       const st = useEditor.getState();
       const mod = e.metaKey || e.ctrlKey;
       const k = e.key.toLowerCase();
+      if (st.view === "home") {
+        // The dashboard only knows New and Open.
+        if (mod && k === "o") return (e.preventDefault(), void commands.open());
+        if (mod && k === "n") return (e.preventDefault(), commands.newProject());
+        return;
+      }
       if (mod && k === "z") {
         e.preventDefault();
         return e.shiftKey ? commands.redo() : commands.undo();
@@ -27,8 +33,10 @@ export function useShortcuts(): void {
       if (mod && k === "v") return (e.preventDefault(), void commands.paste());
       if (mod && k === "a") return (e.preventDefault(), commands.selectAll());
       if (mod && k === "o") return (e.preventDefault(), void commands.open());
-      if (mod && e.shiftKey && k === "s") return (e.preventDefault(), commands.saveVersion());
-      if (mod && k === "s") return (e.preventDefault(), commands.saveProject());
+      if (mod && e.altKey && e.code === "KeyS") return (e.preventDefault(), commands.saveVersion());
+      if (mod && e.shiftKey && k === "s") return (e.preventDefault(), commands.saveAs());
+      if (mod && k === "s") return (e.preventDefault(), commands.save());
+      if (mod && k === "n") return (e.preventDefault(), commands.newProject());
       if (mod && k === "e") return (e.preventDefault(), commands.openExport());
       if (mod && k === "g") return (e.preventDefault(), commands.precompose());
       if (mod && k === "0") return (e.preventDefault(), commands.fit());
