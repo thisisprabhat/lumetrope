@@ -9,6 +9,8 @@ import { TopBar } from "./components/TopBar";
 import { openUrl } from "./files";
 import { markPreviewed, scheduleSave } from "./persist";
 import { Dashboard } from "./components/Dashboard";
+import { PaneSplitters } from "./components/PaneSplitters";
+import { FullscreenPlayer } from "./components/FullscreenPlayer";
 import { LeftSidebar } from "./panels/LeftSidebar";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { Timeline } from "./panels/Timeline";
@@ -47,6 +49,8 @@ export function App() {
     if (mode === "preview") void markPreviewed();
   }, [mode]);
   const view = useEditor((s) => s.view);
+  const panes = useEditor((s) => s.panes);
+  const fullscreen = useEditor((s) => s.fullscreen);
   useSmPreview();
   useShortcuts();
   if (view === "home")
@@ -59,12 +63,14 @@ export function App() {
       </>
     );
   return (
-    <div className={`app mode-${mode}`}>
+    <div className={`app mode-${mode}`} style={{ "--left-w": `${panes.left}px`, "--right-w": `${panes.right}px`, "--timeline-h": `${panes.bottom}px` } as React.CSSProperties}>
       <TopBar />
       <aside className="panel left">{mode === "animate" ? <LeftSidebar /> : <MachinesPanel />}</aside>
       <Stage overlay={(zoom) => (mode === "animate" ? <CanvasOverlay zoom={zoom} /> : <SmPointerOverlay zoom={zoom} />)} />
       <aside className="panel right">{mode === "animate" ? <PropertiesPanel /> : mode === "state" ? <SmInspector /> : <PreviewPanel />}</aside>
       <section className="panel bottom">{mode === "animate" ? <Timeline /> : mode === "state" ? <SmGraph /> : <EventLog />}</section>
+      <PaneSplitters />
+      {fullscreen && <FullscreenPlayer />}
       <Toasts />
       <ContextMenuHost />
       {exportOpen && <ExportDialog onClose={() => setExportOpen(false)} />}

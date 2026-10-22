@@ -20,6 +20,9 @@ and Linux (Tauri).
   fill, tint, tritone).
 - Timeline with layer bars, keyframe dragging and segment (marker) band; align/distribute,
   snapping, grid, copy/paste, undo/redo, context menus everywhere.
+- Resizable left, right and timeline panes (drag the edges; double-click to reset).
+- Full-screen player (F): fitted playback with scrubbing, speed, backgrounds, and interactive
+  state-machine playback you can click.
 - Lottie-Editor style quick edits: global recolouring of every colour, file info, canvas size,
   frame rate and duration.
 
@@ -38,8 +41,9 @@ and Linux (Tauri).
   animation, or flatten onto a background colour instead.
 
 **Projects & files**
-- Opens on a dashboard of every project you've created, opened, edited, previewed or exported,
-  with thumbnails, search, filters and quick-start canvases and samples.
+- Opens on a dashboard: start on the left (new project, custom size, canvas presets, open a file,
+  paste Lottie JSON, new from SVG, samples, connect an AI agent) and every project you've created,
+  opened, edited, previewed or exported on the right, with thumbnails, search and filters.
 - Remembers where files live: paths in the desktop app (access survives restarts), File System
   Access handles in Chrome/Edge, a cached copy elsewhere. ⌘S writes back to the file, ⇧⌘S saves
   as a new one; outside changes are picked up when you reopen and kept in version history.
@@ -135,6 +139,7 @@ On Windows and Linux use Ctrl wherever ⌘ is shown; menus show the right labels
 | ⌘C ⌘X ⌘V ⌘D ⌫ | copy, cut, paste, duplicate, delete |
 | ⌘G | group into nested scene |
 | , . | previous / next frame |
+| F | play full screen |
 | ⌘+ ⌘− ⇧1 ⇧0 ⇧2 | zoom in/out, fit, 100%, selection |
 | ⌘S ⇧⌘S ⌥⌘S | save to file, save as, save version |
 | ⌘N ⌘O ⌘E | new project, open, export |

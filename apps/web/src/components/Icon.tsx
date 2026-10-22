@@ -22,6 +22,7 @@ const paths: Record<string, string> = {
   zoomIn: "M7 3a4 4 0 110 8 4 4 0 010-8zM10 10l3.5 3.5M5 7h4M7 5v4",
   zoomOut: "M7 3a4 4 0 110 8 4 4 0 010-8zM10 10l3.5 3.5M5 7h4",
   fit: "M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10",
+  expand: "M9.5 2.5h4v4M13.5 2.5L9 7M6.5 13.5h-4v-4M2.5 13.5L7 9",
   plus: "M8 3v10M3 8h10",
   minus: "M3 8h10",
   close: "M4 4l8 8M12 4l-8 8",

@@ -41,6 +41,9 @@ export function PlayerBar() {
           </option>
         ))}
       </select>
+      <button className="icon-btn" data-tip="Play full screen (F)" aria-label="Play full screen" onClick={() => useEditor.setState({ fullscreen: true })}>
+        <Icon name="expand" />
+      </button>
     </div>
   );
 }

@@ -2,12 +2,15 @@
 // its version history, a thumbnail and its activity (created, opened, edited,
 // previewed, exported). Projects opened from or saved to disk remember their
 // file so ⌘S writes back to it and the dashboard can reopen it.
+import { act } from "./actions";
 import { engine, projectValue } from "./engine";
 import { exportFileName } from "./lib/export";
 import { createLibrary, type FileLink, type Origin, type ProjectMeta } from "./library/db";
 import { linkLabel, pickOpen, pickSave, readLink, saveFormat, writeLink, type Picked } from "./library/files";
 import { saveFile } from "./platform";
 import { useEditor } from "./store";
+import { looksLikeLottie, svgCanvasSize, svgDeclaredSize } from "./library/start";
+import { Engine } from "./wasm/lumetrope_wasm.js";
 
 export const library = createLibrary();
 
@@ -27,23 +30,23 @@ export function newProjectId(): string {
 
 const stripExt = (n: string) => n.replace(/\.(json|lottie)$/i, "");
 
-function readInfo(): ProjectMeta["info"] {
+function readInfo(e: Engine = engine()): ProjectMeta["info"] {
   try {
-    const i = JSON.parse(engine().info());
-    const p = projectValue();
+    const i = JSON.parse(e.info());
+    const p = JSON.parse(e.project_json());
     return { w: i.w, h: i.h, fr: i.fr, frames: i.op - i.ip, layers: i.layers, machines: Object.keys(p.stateMachines ?? {}).length };
   } catch {
     return undefined;
   }
 }
 
-function makeThumb(): string | undefined {
+function makeThumb(e: Engine = engine()): string | undefined {
   try {
-    const i = JSON.parse(engine().info());
+    const i = JSON.parse(e.info());
     const s = Math.min(320 / i.w, 200 / i.h, 1);
     const w = Math.max(1, Math.round(i.w * s));
     const h = Math.max(1, Math.round(i.h * s));
-    const rgba = engine().render(Math.floor(i.ip + (i.op - i.ip) / 2), w, h);
+    const rgba = e.render(Math.floor(i.ip + (i.op - i.ip) / 2), w, h);
     const c = document.createElement("canvas");
     c.width = w;
     c.height = h;
@@ -282,6 +285,71 @@ export async function saveAs(): Promise<void> {
     st().toast(`Saved ${linkLabel({ name: target.name, link: target.link, synced: true })}`);
   } catch (e) {
     st().toast(`Could not save: ${e}`, "error");
+  }
+}
+
+/** New project sized to an SVG, with the artwork centred (scaled up when it is icon-sized). */
+export async function createFromSvg(file: File): Promise<void> {
+  const svg = await file.text();
+  const size = svgCanvasSize(svg);
+  await createProject({ ...size, name: file.name.replace(/\.svg$/i, "") });
+  const r = act<{ id: string }>("import_svg", { svg, name: file.name.replace(/\.svg$/i, "") });
+  const declared = svgDeclaredSize(svg);
+  if (r && declared) {
+    const k = Math.min(size.w / declared.w, size.h / declared.h) * 100;
+    if (Math.abs(k - 100) > 0.01) act("set_transform", { layer: r.id, scale: [k, k] });
+  }
+  if (r) st().select([r.id]);
+}
+
+/** Open Lottie JSON copied to the clipboard as a new project. */
+export async function openFromClipboard(): Promise<void> {
+  let text = "";
+  try {
+    text = (await navigator.clipboard?.readText()) ?? "";
+  } catch {
+    return st().toast("Clipboard access was blocked; paste with ⌘V inside the editor instead", "error");
+  }
+  if (!looksLikeLottie(text)) return st().toast("The clipboard doesn't hold Lottie JSON", "error");
+  let name = "Pasted animation";
+  try {
+    name = JSON.parse(text).nm || name;
+  } catch {
+    /* checked above */
+  }
+  await openPicked({ file: new File([text], "pasted.json") }, "new", name);
+}
+
+/** Give projects saved before thumbnails existed a preview (rendered off to the side). */
+export async function backfillThumbnails(list: ProjectMeta[], onEach: () => void): Promise<void> {
+  for (const m of list) {
+    if (m.thumb) continue;
+    const data = await library.getData(m.id).catch(() => undefined);
+    if (!data) continue;
+    const e = new Engine();
+    try {
+      e.set_project_json(data.project);
+      const thumb = makeThumb(e);
+      if (thumb) {
+        await library.patch(m.id, { thumb, info: m.info ?? readInfo(e) });
+        onEach();
+      }
+    } catch {
+      /* unreadable project: keep the placeholder */
+    } finally {
+      e.free();
+    }
+    await new Promise((r) => setTimeout(r, 0));
+  }
+}
+
+/** Approximate local storage used by the library (browser estimate). */
+export async function storageUsage(): Promise<{ used: number; quota: number } | null> {
+  try {
+    const e = await navigator.storage?.estimate?.();
+    return e?.usage != null && e.quota != null ? { used: e.usage, quota: e.quota } : null;
+  } catch {
+    return null;
   }
 }
 

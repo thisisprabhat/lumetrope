@@ -4,6 +4,7 @@ import { centerCamera, fitCamera, nextStep, zoomAt, type Camera, type WheelMode 
 import { clampFrame } from "./lib/time";
 import { canvasFilterSupported, defaultRenderer } from "./platform";
 import type { ProjectMeta } from "./library/db";
+import { DEFAULT_PANES, type Panes } from "./lib/panes";
 
 export type Mode = "animate" | "state" | "preview";
 export type Tool = "select" | "rect" | "ellipse" | "polygon" | "star" | "pen" | "text" | "hand";
@@ -65,6 +66,11 @@ interface EditorState {
   setView: (v: "home" | "editor") => void;
   /** Library entry of the open project (null until it has one). */
   project: ProjectMeta | null;
+  /** Full-screen player over everything else. */
+  fullscreen: boolean;
+  /** Editor pane sizes in px (left sidebar, right inspector, bottom timeline). */
+  panes: Panes;
+  setPanes: (p: Panes) => void;
   savedAt: number;
   historyTick: number;
   bumpHistory: () => void;
@@ -144,6 +150,12 @@ export const useEditor = create<EditorState>((set, get) => ({
   view: "home",
   setView: (view) => set({ view }),
   project: null,
+  fullscreen: false,
+  panes: loadPanes(),
+  setPanes: (panes) => {
+    localStorageSet("lumetrope.panes", JSON.stringify(panes));
+    set({ panes });
+  },
   historyTick: 0,
   bumpHistory: () => set({ historyTick: get().historyTick + 1 }),
   machine: null,
@@ -251,3 +263,13 @@ function localStorageSet(k: string, v: string): void {
 }
 
 export { centerCamera };
+
+function loadPanes(): Panes {
+  try {
+    const v = JSON.parse(localStorageGet("lumetrope.panes") ?? "null");
+    if (v && [v.left, v.right, v.bottom].every((n) => typeof n === "number" && n > 0)) return v;
+  } catch {
+    /* fall back to defaults */
+  }
+  return { ...DEFAULT_PANES };
+}

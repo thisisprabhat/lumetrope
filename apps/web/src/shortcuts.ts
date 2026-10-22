@@ -14,6 +14,7 @@ export function useShortcuts(): void {
     const onKey = (e: KeyboardEvent) => {
       if (typing(e)) return;
       const st = useEditor.getState();
+      if (st.fullscreen) return; // the full-screen player handles its own keys
       const mod = e.metaKey || e.ctrlKey;
       const k = e.key.toLowerCase();
       if (st.view === "home") {
@@ -45,6 +46,7 @@ export function useShortcuts(): void {
       if (mod) return;
       if (e.key === "Delete" || e.key === "Backspace") return (e.preventDefault(), commands.remove());
       if (e.key === "Escape") return st.select([]);
+      if (k === "f" && !e.shiftKey && !e.altKey) return (e.preventDefault(), useEditor.setState({ fullscreen: true }));
       if (e.shiftKey && e.code === "Digit1") return commands.fit();
       if (e.shiftKey && e.code === "Digit0") return st.zoomTo(1);
       if (e.shiftKey && e.code === "Digit2") return commands.zoomToSelection();

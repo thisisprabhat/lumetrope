@@ -70,6 +70,8 @@ export function TopBar() {
       <Menu
         trigger={<span className="menu-word">View</span>}
         items={[
+          { label: "Play full screen", shortcut: "F", onSelect: () => useEditor.setState({ fullscreen: true }) },
+          { separator: true, label: "" },
           { label: "Zoom to fit", shortcut: "⌘0", onSelect: commands.fit },
           { label: "Snapping", checked: snapping, onSelect: () => setSnapping(!snapping) },
           { label: "Grid", checked: grid, onSelect: () => setGrid(!grid) },

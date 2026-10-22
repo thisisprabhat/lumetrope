@@ -148,7 +148,11 @@ export async function exportWebm(o: MediaOptions, progress: (p: Progress) => voi
   const alphaEnc = o.transparent ? makeEncoder(config, alpha, fail) : null;
   const bg = hexToRgb(o.background);
   const px = new Uint8Array(size.w * size.h * 4);
-  const ax = new Uint8Array(size.w * size.h * 4);
+  // Alpha goes in as the Y plane of an I420 frame (U/V neutral): no RGB→YUV conversion, so no
+  // limited-range (16–235) squashing by encoders that use video range (macOS WebKit does).
+  const plane = size.w * size.h;
+  const ax = new Uint8Array(plane + 2 * ((size.w / 2) * (size.h / 2)));
+  ax.fill(128, plane);
   const keyEvery = Math.max(1, Math.round(o.fps * 2));
   const close = () => {
     for (const e of [colorEnc, alphaEnc]) if (e && e.state !== "closed") e.close();
@@ -166,8 +170,7 @@ export async function exportWebm(o: MediaOptions, progress: (p: Progress) => voi
             px[p] = a ? rgba[p] : 0;
             px[p + 1] = a ? rgba[p + 1] : 0;
             px[p + 2] = a ? rgba[p + 2] : 0;
-            ax[p] = ax[p + 1] = ax[p + 2] = a;
-            ax[p + 3] = 255;
+            ax[p >> 2] = a;
           } else {
             px[p] = (rgba[p] * a + bg[0] * (255 - a) + 127) / 255;
             px[p + 1] = (rgba[p + 1] * a + bg[1] * (255 - a) + 127) / 255;
@@ -181,7 +184,7 @@ export async function exportWebm(o: MediaOptions, progress: (p: Progress) => voi
         colorEnc.encode(f, { keyFrame });
         f.close();
         if (alphaEnc) {
-          const fa = new VideoFrame(ax, { format: "RGBX", codedWidth: size.w, codedHeight: size.h, timestamp, duration: Math.round(1e6 / o.fps) });
+          const fa = new VideoFrame(ax, { format: "I420", codedWidth: size.w, codedHeight: size.h, timestamp, duration: Math.round(1e6 / o.fps), colorSpace: { fullRange: true, matrix: "bt709", primaries: "bt709", transfer: "bt709" } });
           alphaEnc.encode(fa, { keyFrame });
           fa.close();
         }

@@ -9,13 +9,14 @@ import { markExported } from "../persist";
 import { useEditor } from "../store";
 import { Icon } from "./Icon";
 
-const FORMATS: { id: ExportFormat; title: string; note: string }[] = [
-  { id: "lottie", title: "dotLottie", note: ".lottie · animations, state machines, themes, images and fonts" },
-  { id: "json", title: "Lottie JSON", note: ".json · the main animation, for any Lottie player" },
-  { id: "gif", title: "GIF", note: ".gif · plays everywhere · 1-bit transparency" },
-  { id: "webp", title: "Animated WebP", note: ".webp · lossless, full alpha" },
-  { id: "webm", title: "WebM video", note: ".webm · VP9/VP8 with alpha channel" },
+const FORMATS: { id: ExportFormat; group: string; title: string; ext: string; note: string }[] = [
+  { id: "lottie", group: "Lottie", title: "dotLottie", ext: ".lottie", note: "Everything: animations, state machines, themes, assets" },
+  { id: "json", group: "Lottie", title: "Lottie JSON", ext: ".json", note: "Main animation for any Lottie player" },
+  { id: "gif", group: "Animated image", title: "GIF", ext: ".gif", note: "Plays everywhere · on/off transparency" },
+  { id: "webp", group: "Animated image", title: "Animated WebP", ext: ".webp", note: "Lossless · full alpha" },
+  { id: "webm", group: "Video", title: "WebM", ext: ".webm", note: "VP9/VP8 video with alpha" },
 ];
+const GROUPS = ["Lottie", "Animated image", "Video"];
 
 const isMedia = (f: ExportFormat): f is MediaFormat => f === "gif" || f === "webp" || f === "webm";
 const SCALES = [0.25, 0.5, 1, 2];
@@ -80,16 +81,28 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", esc);
   }, [onClose, busy]);
 
+  // Fit the preview inside the stage (contain), re-fitting when the stage resizes.
+  const stage = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 360, h: 300 });
+  useEffect(() => {
+    const el = stage.current!;
+    const ro = new ResizeObserver(() => setBox({ w: el.clientWidth, h: el.clientHeight }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     const c = canvas.current!;
     const ctx = c.getContext("2d")!;
-    const s = Math.min(320 / info.w, 200 / info.h);
-    const w = Math.max(1, Math.round(info.w * s * devicePixelRatio));
-    const h = Math.max(1, Math.round(info.h * s * devicePixelRatio));
+    const pad = 28;
+    const s = Math.max(0.01, Math.min((box.w - pad * 2) / info.w, (box.h - pad * 2) / info.h));
+    const dpr = devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(info.w * s * dpr));
+    const h = Math.max(1, Math.round(info.h * s * dpr));
     c.width = w;
     c.height = h;
-    c.style.width = `${w / devicePixelRatio}px`;
-    c.style.height = `${h / devicePixelRatio}px`;
+    c.style.width = `${w / dpr}px`;
+    c.style.height = `${h / dpr}px`;
     let raf = 0;
     const t0 = performance.now();
     const gpu = new CanvasRenderer();
@@ -99,12 +112,13 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
     const loop = (now: number) => {
       // Preview at the export frame rate so choppiness is visible before exporting.
       const f = start + (Math.floor(((((now - t0) / 1000) * effFps) % ((len * effFps) / info.fr))) * info.fr) / effFps;
+      ctx.clearRect(0, 0, w, h);
       gpu.render(ctx, JSON.parse(engine().display_list(f, z, 0, 0)), w, h, [0, 0, w, h]);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [info, start, end, effFps]);
+  }, [info, start, end, effFps, box]);
 
   const finishSave = (bytes: Uint8Array, mime: string) => {
     const file = exportFileName(name, format);
@@ -133,147 +147,174 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
 
   const pct = busy ? Math.round((busy.progress.done / Math.max(1, busy.progress.total)) * 100) : 0;
 
+  const disabled = !!busy;
+  const seconds = ((end - start) / info.fr).toFixed(1);
+
   return (
     <div className="modal-backdrop" onPointerDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
-      <div className="modal wide export-modal" role="dialog" aria-label="Export">
+      <div className="modal export-modal" role="dialog" aria-label="Export">
         <header className="modal-head">
           <span>Export</span>
-          <button className="icon-btn" onClick={onClose} aria-label="Close" disabled={!!busy}>
+          <button className="icon-btn" onClick={onClose} aria-label="Close" disabled={disabled}>
             <Icon name="close" />
           </button>
         </header>
-        <div className={`export-preview ${media && !transparent ? "solid" : ""}`} style={media && !transparent ? { background } : undefined}>
-          <canvas ref={canvas} />
-        </div>
-        <div className="modal-body">
-          <div className="format-cards five">
-            {FORMATS.map((f) => {
-              const disabled = f.id === "webm" && webm === null;
-              return (
-                <button key={f.id} className={`format-card ${format === f.id ? "on" : ""}`} disabled={disabled || !!busy} onClick={() => setFormat(f.id)}>
-                  <strong>{f.title}</strong>
-                  <span>{f.id === "webm" && webm && webm !== "checking" ? `${f.note.replace("VP9/VP8", webm.label)}` : f.note}</span>
-                </button>
-              );
-            })}
-          </div>
-          {webm === null && <div className="muted tiny">WebM needs a VP8/VP9 video encoder (WebCodecs), which this window doesn't provide. Chrome, Edge and the Windows app have one.</div>}
-          {format === "json" && interactive && <div className="warn tiny">This project has state machines or themes; they are only kept in dotLottie.</div>}
+        <div className="export-grid">
+          <section className="export-stage-col">
+            <div ref={stage} className={`export-stage ${media && !transparent ? "solid" : ""}`} style={media && !transparent ? { background } : undefined}>
+              <canvas ref={canvas} />
+            </div>
+            <div className="export-facts num">
+              <span>
+                {media ? `${size.w}×${size.h}` : `${info.w}×${info.h}`}
+              </span>
+              <span>{media ? effFps : info.fr} fps</span>
+              <span>{media ? `${frameCount} frames` : `${info.op - info.ip} frames`}</span>
+              <span>{seconds}s</span>
+            </div>
+          </section>
 
-          {media && (
-            <div className="export-options">
-              <label className="prow">
-                <span className="prow-label">Size</span>
-                <select className="text-input" value={effScale} onChange={(e) => setScale(Number(e.target.value))} disabled={!!busy}>
-                  {SCALES.map((s) => {
-                    const z = format === "webm" ? evenSize(exportSize(info.w, info.h, s)) : exportSize(info.w, info.h, s);
+          <section className="export-side">
+            <div className="export-formats" role="radiogroup" aria-label="Format">
+              {GROUPS.map((g) => (
+                <div key={g} className="export-group">
+                  <div className="export-group-label">{g}</div>
+                  {FORMATS.filter((f) => f.group === g).map((f) => {
+                    const unavailable = f.id === "webm" && webm === null;
+                    const note = f.id === "webm" && webm && webm !== "checking" ? f.note.replace("VP9/VP8", webm.label) : f.note;
                     return (
-                      <option key={s} value={s}>
-                        {s}× · {z.w}×{z.h}
-                      </option>
+                      <button
+                        key={f.id}
+                        role="radio"
+                        aria-checked={format === f.id}
+                        className={`export-format ${format === f.id ? "on" : ""}`}
+                        disabled={unavailable || disabled}
+                        onClick={() => setFormat(f.id)}
+                        title={unavailable ? "No VP8/VP9 video encoder (WebCodecs) in this window" : undefined}
+                      >
+                        <span className="export-ext num">{f.ext}</span>
+                        <span className="export-format-text">
+                          <strong>{f.title}</strong>
+                          <span>{unavailable ? "Needs a WebCodecs video encoder (Chrome, Edge, Windows app)" : note}</span>
+                        </span>
+                        <span className="export-radio" aria-hidden />
+                      </button>
                     );
                   })}
-                </select>
-                <span />
-              </label>
-              <label className="prow">
-                <span className="prow-label">Frame rate</span>
-                <select className="text-input" value={effFps} onChange={(e) => setFps(Number(e.target.value))} disabled={!!busy}>
-                  {FPS.filter((f) => format !== "gif" || f <= 50).map((f) => (
-                    <option key={f} value={f}>
-                      {f} fps{Math.round(info.fr) === f ? " (scene)" : ""}
-                    </option>
-                  ))}
-                </select>
-                <span />
-              </label>
-              <label className="prow">
-                <span className="prow-label">Frames</span>
-                <select className="text-input" value={range} onChange={(e) => setRange(e.target.value)} disabled={!!busy}>
-                  <option value="all">Whole animation</option>
-                  {info.markers.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      Segment: {m.name}
-                    </option>
-                  ))}
-                </select>
-                <span />
-              </label>
-              <div className="prow">
-                <span className="prow-label">Background</span>
-                <div className="row">
-                  <button className={`chip-btn ${transparent ? "on" : ""}`} onClick={() => setTransparent(true)} disabled={!!busy}>
-                    Transparent
-                  </button>
-                  <button className={`chip-btn ${!transparent ? "on" : ""}`} onClick={() => setTransparent(false)} disabled={!!busy}>
-                    Colour
-                  </button>
-                  {!transparent && <input type="color" value={background} onChange={(e) => setBackground(e.target.value)} aria-label="Background colour" disabled={!!busy} />}
                 </div>
-                <span />
-              </div>
-              {format === "gif" && transparent && (
-                <div className="prow">
-                  <span className="prow-label">Edge matte</span>
-                  <div className="row">
-                    <input type="color" value={matte} onChange={(e) => setMatte(e.target.value)} aria-label="Edge matte colour" disabled={!!busy} />
-                    <span className="muted tiny">GIF pixels are either clear or solid; soft edges blend into this colour (match the page it will sit on).</span>
-                  </div>
-                  <span />
-                </div>
-              )}
-              {format === "webm" && (
-                <label className="prow">
-                  <span className="prow-label">Quality</span>
-                  <select className="text-input" value={quality} onChange={(e) => setQuality(Number(e.target.value))} disabled={!!busy}>
-                    {QUALITY.map((q) => (
-                      <option key={q.label} value={q.bpp}>
-                        {q.label}
+              ))}
+            </div>
+
+            {format === "json" && interactive && <div className="export-note warn">State machines and themes are only kept in dotLottie.</div>}
+
+            {media && (
+              <div className="export-settings">
+                <label>
+                  <span>Size</span>
+                  <select value={effScale} onChange={(e) => setScale(Number(e.target.value))} disabled={disabled}>
+                    {SCALES.map((sc) => {
+                      const z = format === "webm" ? evenSize(exportSize(info.w, info.h, sc)) : exportSize(info.w, info.h, sc);
+                      return (
+                        <option key={sc} value={sc}>
+                          {sc}× · {z.w}×{z.h}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </label>
+                <label>
+                  <span>Frame rate</span>
+                  <select value={effFps} onChange={(e) => setFps(Number(e.target.value))} disabled={disabled}>
+                    {FPS.filter((f) => format !== "gif" || f <= 50).map((f) => (
+                      <option key={f} value={f}>
+                        {f} fps{Math.round(info.fr) === f ? " · scene" : ""}
                       </option>
                     ))}
                   </select>
-                  <span />
                 </label>
-              )}
-            </div>
-          )}
-
-          <div className="prow">
-            <span className="prow-label">File name</span>
-            <input className="text-input" value={name} onChange={(e) => setName(e.target.value)} disabled={!!busy} />
-            <span />
-          </div>
-          <div className="muted tiny">
-            {exportFileName(name, format)} ·{" "}
-            {media
-              ? `${size.w}×${size.h} · ${effFps} fps · ${frameCount} frames · ${transparent ? "transparent" : "solid background"}`
-              : `${typeof payload === "string" ? "error" : formatBytes(payload?.byteLength ?? 0)} · ${info.w}×${info.h} · ${info.fr} fps · ${info.op - info.ip} frames`}
-          </div>
-          {busy && (
-            <div className="export-progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-              <div className="export-bar">
-                <span style={{ width: `${pct}%` }} />
+                <label className="span2">
+                  <span>Frames</span>
+                  <select value={range} onChange={(e) => setRange(e.target.value)} disabled={disabled}>
+                    <option value="all">Whole animation</option>
+                    {info.markers.map((m) => (
+                      <option key={m.name} value={m.name}>
+                        Segment · {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="span2 export-bg">
+                  <span>Background</span>
+                  <div className="bg-seg">
+                    <button className={transparent ? "on" : ""} onClick={() => setTransparent(true)} disabled={disabled}>
+                      <span className="swatch checker" /> Transparent
+                    </button>
+                    <button className={!transparent ? "on" : ""} onClick={() => setTransparent(false)} disabled={disabled}>
+                      <span className="swatch" style={{ background }} /> Colour
+                    </button>
+                  </div>
+                  {!transparent && <input type="color" value={background} onChange={(e) => setBackground(e.target.value)} aria-label="Background colour" disabled={disabled} />}
+                </div>
+                {format === "gif" && transparent && (
+                  <div className="span2 export-bg">
+                    <span>Edge matte</span>
+                    <input type="color" value={matte} onChange={(e) => setMatte(e.target.value)} aria-label="Edge matte colour" disabled={disabled} />
+                    <em>GIF pixels are clear or solid; soft edges blend into this colour. Match the page it will sit on.</em>
+                  </div>
+                )}
+                {format === "webm" && (
+                  <label className="span2">
+                    <span>Quality</span>
+                    <select value={quality} onChange={(e) => setQuality(Number(e.target.value))} disabled={disabled}>
+                      {QUALITY.map((q) => (
+                        <option key={q.label} value={q.bpp}>
+                          {q.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
-              <span className="muted tiny">
-                {busy.progress.stage}
-                {busy.progress.total > 1 ? ` · ${busy.progress.done}/${busy.progress.total}` : "…"}
-              </span>
-            </div>
-          )}
+            )}
+          </section>
         </div>
-        <footer className="modal-foot">
-          {busy ? (
-            <button className="btn ghost" onClick={() => busy.abort.abort()}>
-              Cancel export
+
+        <footer className="export-foot">
+          <div className="export-file">
+            <div className="export-name">
+              <input value={name} onChange={(e) => setName(e.target.value)} disabled={disabled} aria-label="File name" spellCheck={false} />
+              <span className="num">.{format}</span>
+            </div>
+            {busy ? (
+              <div className="export-progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                <div className="export-bar">
+                  <span style={{ width: `${pct}%` }} />
+                </div>
+                <span>
+                  {busy.progress.stage}
+                  {busy.progress.total > 1 ? ` · ${busy.progress.done}/${busy.progress.total}` : "…"}
+                </span>
+              </div>
+            ) : (
+              <span className="export-summary">
+                {media ? (transparent ? "Transparent background" : "Solid background") : typeof payload === "string" ? "Can't export this project" : formatBytes(payload?.byteLength ?? 0)}
+              </span>
+            )}
+          </div>
+          <div className="export-buttons">
+            {busy ? (
+              <button className="btn ghost" onClick={() => busy.abort.abort()}>
+                Cancel export
+              </button>
+            ) : (
+              <button className="btn ghost" onClick={onClose}>
+                Cancel
+              </button>
+            )}
+            <button className="btn primary" onClick={() => void save()} disabled={disabled || (format === "webm" && !webm)}>
+              <Icon name="export" size={14} /> {media ? "Export" : "Save"}
             </button>
-          ) : (
-            <button className="btn ghost" onClick={onClose}>
-              Cancel
-            </button>
-          )}
-          <button className="btn primary" onClick={() => void save()} disabled={!!busy || (format === "webm" && !webm)}>
-            <Icon name="export" size={14} /> {media ? "Export" : "Download"}
-          </button>
+          </div>
         </footer>
       </div>
     </div>
