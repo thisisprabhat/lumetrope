@@ -26,7 +26,7 @@ export const HOST_TOOLS = [
   { name: "list_versions", description: "List saved versions (newest first) on the current branch.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
   {
     name: "restore_version",
-    description: "Restore a saved version by id (from list_versions).",
+    description: "Restore a saved version by id (from list_versions). Unsaved work is first kept as an Auto-saved version.",
     inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"], additionalProperties: false },
   },
   {

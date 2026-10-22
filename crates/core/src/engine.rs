@@ -257,7 +257,9 @@ impl Engine {
     }
 
     /// Load a version into the editor (undo history is cleared).
-    pub fn vcs_restore(&mut self, id: &str) -> Result<(), String> {
+    /// Unsaved work is first kept as an "Auto-saved" version so it can be restored.
+    pub fn vcs_restore(&mut self, id: &str, ts: f64) -> Result<(), String> {
+        self.auto_save(&format!("Auto-saved before restoring {}", &id[..id.len().min(7)]), ts);
         let bytes = self.repo.checkout(id)?;
         let v: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
         self.replace_project(project::normalize(v)?);
@@ -273,12 +275,26 @@ impl Engine {
     }
 
     /// Switch branch and load its latest version (keeps the current document if the branch is empty).
-    pub fn vcs_switch(&mut self, name: &str) -> Result<(), String> {
+    pub fn vcs_switch(&mut self, name: &str, ts: f64) -> Result<(), String> {
+        if !self.repo.branches().iter().any(|(n, _)| n == name) {
+            return Err(format!("no branch '{name}'"));
+        }
+        self.auto_save(&format!("Auto-saved before switching to {name}"), ts);
         if let Some(bytes) = self.repo.switch(name)? {
             let v: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
             self.replace_project(project::normalize(v)?);
         }
         Ok(())
+    }
+
+    /// Commit the working document when it differs from the branch head (or,
+    /// on an empty branch, from a blank document).
+    fn auto_save(&mut self, message: &str, ts: f64) {
+        if self.repo.head_commit().is_none() && !diff_has_changes(&self.vcs_status()) {
+            return;
+        }
+        // Err only means "no changes since the last version".
+        let _ = self.vcs_commit(message, "Lumetrope", ts);
     }
 
     pub fn vcs_diff(&self, a: &str, b: &str) -> Result<Value, String> {
@@ -470,4 +486,8 @@ fn unpremultiply(px: &mut [u8]) {
             }
         }
     }
+}
+
+fn diff_has_changes(d: &Value) -> bool {
+    d.as_object().map(|o| o.values().any(|v| v.as_array().map(|a| !a.is_empty()).unwrap_or(v == &Value::Bool(true)))).unwrap_or(false)
 }

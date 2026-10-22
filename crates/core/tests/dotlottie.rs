@@ -160,3 +160,14 @@ fn lottiefiles_samples_load_and_render() {
     }
     eprintln!("loaded {n} LottieFiles samples");
 }
+
+#[test]
+fn read_refuses_archives_that_inflate_past_the_limit() {
+    let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+    let opts = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    zip.start_file("a/main.json", opts).unwrap();
+    zip.write_all(&vec![b' '; 4096]).unwrap();
+    let bytes = zip.finish().unwrap().into_inner();
+    let err = dotlottie::read_limited(&bytes, 1024).unwrap_err();
+    assert!(err.contains("too large"), "{err}");
+}

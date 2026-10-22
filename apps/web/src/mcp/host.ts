@@ -79,7 +79,7 @@ export async function runTool(tool: string, args: Record<string, any>): Promise<
     case "list_versions":
       return JSON.parse(engine().vcs_log());
     case "restore_version":
-      engine().vcs_restore(String(args.id));
+      engine().vcs_restore(String(args.id), Date.now());
       st().refresh();
       st().bumpHistory();
       return { ok: true };

@@ -169,8 +169,8 @@ impl Engine {
         self.inner.vcs_log().to_string()
     }
 
-    pub fn vcs_restore(&mut self, id: &str) -> Result<(), JsValue> {
-        self.inner.vcs_restore(id).map_err(err)
+    pub fn vcs_restore(&mut self, id: &str, ts: f64) -> Result<(), JsValue> {
+        self.inner.vcs_restore(id, ts).map_err(err)
     }
 
     pub fn vcs_branches(&self) -> String {
@@ -181,8 +181,8 @@ impl Engine {
         self.inner.vcs_create_branch(name).map_err(err)
     }
 
-    pub fn vcs_switch(&mut self, name: &str) -> Result<(), JsValue> {
-        self.inner.vcs_switch(name).map_err(err)
+    pub fn vcs_switch(&mut self, name: &str, ts: f64) -> Result<(), JsValue> {
+        self.inner.vcs_switch(name, ts).map_err(err)
     }
 
     pub fn vcs_diff(&self, a: &str, b: &str) -> Result<String, JsValue> {

@@ -202,7 +202,7 @@ fn engine_version_history() {
     let b = e.vcs_commit("box", "me", 2.0).unwrap();
     assert!(e.vcs_commit("again", "me", 3.0).is_err());
     assert_eq!(e.vcs_log()["commits"].as_array().unwrap().len(), 2);
-    e.vcs_restore(&a).unwrap();
+    e.vcs_restore(&a, 4.0).unwrap();
     assert_eq!(e.info()["layers"], 0);
     assert_eq!(e.vcs_diff(&a, &b).unwrap()["layers_added"], json!(["Box"]));
     e.vcs_create_branch("alt").unwrap();
@@ -211,6 +211,43 @@ fn engine_version_history() {
     let mut e2 = Engine::new();
     e2.vcs_import(&saved).unwrap();
     assert_eq!(e2.vcs_log()["branch"], "alt");
-    e2.vcs_switch("main").unwrap();
+    e2.vcs_switch("main", 5.0).unwrap();
     assert_eq!(e2.info()["layers"], 1, "switching loads the branch head");
+}
+
+#[test]
+fn restore_auto_saves_unsaved_work_first() {
+    let mut e = Engine::new();
+    let a = e.vcs_commit("start", "me", 1.0).unwrap();
+    e.apply("create_shape", &json!({"type": "rect", "name": "Box"}));
+    e.vcs_restore(&a, 5.0).unwrap();
+    assert_eq!(e.info()["layers"], 0, "the chosen version is loaded");
+    let commits = e.vcs_log()["commits"].as_array().unwrap().clone();
+    assert_eq!(commits.len(), 2, "unsaved work was kept as a version");
+    assert!(commits[0]["message"].as_str().unwrap().starts_with("Auto-saved"));
+    assert_eq!(commits[0]["ts"], 5.0);
+    e.vcs_restore(commits[0]["id"].as_str().unwrap(), 6.0).unwrap();
+    assert_eq!(e.info()["layers"], 1, "the auto-saved work comes back");
+}
+
+#[test]
+fn restore_with_no_unsaved_work_adds_no_version() {
+    let mut e = Engine::new();
+    let a = e.vcs_commit("start", "me", 1.0).unwrap();
+    e.apply("create_shape", &json!({"type": "rect", "name": "Box"}));
+    e.vcs_commit("box", "me", 2.0).unwrap();
+    e.vcs_restore(&a, 3.0).unwrap();
+    assert_eq!(e.vcs_log()["commits"].as_array().unwrap().len(), 2);
+}
+
+#[test]
+fn switch_auto_saves_unsaved_work_on_the_old_branch() {
+    let mut e = Engine::new();
+    e.vcs_commit("start", "me", 1.0).unwrap();
+    e.vcs_create_branch("alt").unwrap();
+    e.apply("create_shape", &json!({"type": "rect", "name": "Box"}));
+    e.vcs_switch("main", 4.0).unwrap();
+    assert_eq!(e.info()["layers"], 0);
+    e.vcs_switch("alt", 5.0).unwrap();
+    assert_eq!(e.info()["layers"], 1, "work done on alt survived the round trip");
 }

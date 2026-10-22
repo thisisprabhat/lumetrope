@@ -59,15 +59,28 @@ fn u32_to_hex(v: u64) -> String {
 
 /// Read a .lottie archive into a project value.
 pub fn read(bytes: &[u8]) -> Result<Value, String> {
+    read_limited(bytes, MAX_UNPACKED)
+}
+
+/// Cap on the total inflated size of an archive (guards against zip bombs).
+pub const MAX_UNPACKED: usize = 512 * 1024 * 1024;
+
+pub fn read_limited(bytes: &[u8], max_total: usize) -> Result<Value, String> {
     let mut zip = zip::ZipArchive::new(Cursor::new(bytes)).map_err(|e| format!("not a .lottie (zip) file: {e}"))?;
     let mut files: Vec<(String, Vec<u8>)> = vec![];
+    let mut total = 0usize;
     for i in 0..zip.len() {
         let mut f = zip.by_index(i).map_err(|e| format!("corrupt .lottie: {e}"))?;
         if f.is_dir() {
             continue;
         }
         let mut b = vec![];
-        f.read_to_end(&mut b).map_err(|e| format!("corrupt .lottie: {e}"))?;
+        let room = max_total - total;
+        (&mut f).take(room as u64 + 1).read_to_end(&mut b).map_err(|e| format!("corrupt .lottie: {e}"))?;
+        if b.len() > room {
+            return Err(format!(".lottie is too large (over {} MB unpacked)", max_total / (1024 * 1024)));
+        }
+        total += b.len();
         files.push((f.name().trim_start_matches("./").to_string(), b));
     }
     let get = |name: &str| files.iter().find(|(n, _)| n == name).map(|(_, b)| b.as_slice());

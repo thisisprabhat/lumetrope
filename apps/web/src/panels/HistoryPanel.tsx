@@ -46,7 +46,7 @@ export function HistoryPanel() {
 
   const restore = (c: CommitInfo) => {
     try {
-      engine().vcs_restore(c.id);
+      engine().vcs_restore(c.id, Date.now());
       useEditor.getState().select([]);
       refresh();
       bumpHistory();
@@ -78,7 +78,7 @@ export function HistoryPanel() {
             options={branches.branches.map((b) => ({ value: b.name, label: `⎇ ${b.name}` }))}
             onChange={(name) => {
               try {
-                engine().vcs_switch(name);
+                engine().vcs_switch(name, Date.now());
                 refresh();
                 bumpHistory();
               } catch (e) {
