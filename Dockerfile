@@ -52,6 +52,6 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder-web /app/apps/web/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 6001
 
 CMD ["nginx", "-g", "daemon off;"]
