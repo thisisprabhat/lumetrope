@@ -2,9 +2,10 @@
 // open / paste / import, samples, AI agents). Right: the library of every
 // project created, opened, edited, previewed or exported on this device.
 import { useEffect, useMemo, useRef, useState } from "react";
-import loaderUrl from "../../../../samples/demo-loader.json?url";
-import buttonUrl from "../../../../samples/demo-button.lottie?url";
-import toggleUrl from "../../../../samples/demo-toggle.lottie?url";
+import bloomUrl from "../../../../samples/demo-bloom.lottie?url";
+import dayNightUrl from "../../../../samples/demo-day-night.lottie?url";
+import buddyUrl from "../../../../samples/demo-buddy.lottie?url";
+import grooveUrl from "../../../../samples/demo-groove.lottie?url";
 import { openContextMenu, SEP } from "../contextMenu";
 import { pickFile } from "../files";
 import { filterProjects, lastActivity, sortProjects, type ActivityKind, type ProjectFilter, type ProjectSort } from "../library/activity";
@@ -44,9 +45,10 @@ const PRESETS = [
 ];
 
 const SAMPLES = [
-  { name: "Loader", file: "demo-loader.json", url: loaderUrl, note: "Trim paths + rotation" },
-  { name: "Interactive button", file: "demo-button.lottie", url: buttonUrl, note: "Click → spin", interactive: true },
-  { name: "Toggle switch", file: "demo-toggle.lottie", url: toggleUrl, note: "Boolean input", interactive: true },
+  { name: "Bloom", file: "demo-bloom.lottie", url: bloomUrl, note: "Tap to burst, pick a palette", interactive: true },
+  { name: "Day & Night", file: "demo-day-night.lottie", url: dayNightUrl, note: "Tap the sun or moon", interactive: true },
+  { name: "Buddy", file: "demo-buddy.lottie", url: buddyUrl, note: "Hover, then pet", interactive: true },
+  { name: "Groove", file: "demo-groove.lottie", url: grooveUrl, note: "Music player", interactive: true },
 ];
 
 const FILTERS: { id: ProjectFilter; label: string }[] = [
@@ -343,7 +345,8 @@ export function Dashboard() {
       <header className="home-top">
         <div className="wordmark">
           <svg className="disc" viewBox="0 0 20 20" aria-hidden>
-            <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3.2" strokeDasharray="5.5 5.5" />
+            <circle className="ring" cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3.2" strokeDasharray="8.5 2.5" strokeDashoffset="-1.25" />
+<circle className="dot" cx="10" cy="10" r="1.8" fill="currentColor" />
           </svg>
           Lumetrope
         </div>
