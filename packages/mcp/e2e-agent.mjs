@@ -2,10 +2,11 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const out = process.argv[2];
 const client = new Client({ name: "e2e-agent", version: "0" });
-await client.connect(new StdioClientTransport({ command: process.execPath, args: [new URL("./dist/lumetrope-mcp.mjs", import.meta.url).pathname], stderr: "inherit" }));
+await client.connect(new StdioClientTransport({ command: process.execPath, args: [fileURLToPath(new URL("./dist/lumetrope-mcp.mjs", import.meta.url))], stderr: "inherit" }));
 const call = async (name, args = {}) => {
   const r = await client.callTool({ name, arguments: args });
   if (r.isError) throw new Error(`${name}: ${r.content[0].text}`);

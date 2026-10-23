@@ -9,6 +9,7 @@
     "build:mac": "tauri build --bundles app,dmg",
     "build:mac-universal": "tauri build --target universal-apple-darwin --bundles app,dmg",
     "build:windows": "tauri build --bundles nsis,msi",
+    "build:windows-arm": "tauri build --target aarch64-pc-windows-msvc --bundles nsis",
     "build:linux": "tauri build --bundles deb,rpm,appimage",
     "icons": "tauri icon icon-source.png -o src-tauri/icons"
   },

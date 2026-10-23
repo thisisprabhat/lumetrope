@@ -1,0 +1,9 @@
+target
+**/node_modules
+**/dist
+apps/web/src/wasm
+samples/lottiefiles
+.git
+.superpowers
+.DS_Store
+docker/out

@@ -60,6 +60,7 @@ Install the common tools once Rust and Node are on your machine:
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo install wasm-pack            # or use the installer at rustwasm.github.io/wasm-pack/installer
+npm install -g corepack@latest     # older Node 20 corepacks have stale npm signing keys
 corepack enable                    # gives you the pinned pnpm
 ```
 
@@ -252,7 +253,9 @@ supported, so use the CI workflow to get all three.
 | macOS | `pnpm --filter @lumetrope/desktop build:mac` | `macos/Lumetrope.app`, `dmg/Lumetrope_0.1.0_<arch>.dmg` |
 | macOS universal | `pnpm --filter @lumetrope/desktop build:mac-universal` | as above, under `target/universal-apple-darwin/release/bundle/` |
 | Windows | `pnpm --filter @lumetrope/desktop build:windows` | `nsis\Lumetrope_0.1.0_x64-setup.exe`, `msi\Lumetrope_0.1.0_x64_en-US.msi` |
+| Windows on ARM | `pnpm --filter @lumetrope/desktop build:windows-arm` (after `rustup target add aarch64-pc-windows-msvc`) | `target\aarch64-pc-windows-msvc\release\bundle\nsis\…-setup.exe` (MSI can't target ARM64) |
 | Linux | `pnpm --filter @lumetrope/desktop build:linux` | `deb/*.deb`, `rpm/*.rpm`, `appimage/*.AppImage` |
+| Linux, from any OS with Docker | `docker build -f docker/linux-desktop.Dockerfile --output docker/out .` | `docker/out/*.deb`, `*.rpm`, `*.AppImage` (for the Docker host's CPU architecture) |
 | Any | `pnpm --filter @lumetrope/desktop build` | every format the current OS supports |
 
 For a quick local build without installers use the Tauri CLI directly:
@@ -280,6 +283,20 @@ have one; where a webview doesn't, the export dialog disables WebM and says why.
 
 **File access.** The app can only read or write files you pick in its native Open/Save dialogs;
 no folder is opened up front (see `apps/desktop/src-tauri/capabilities/default.json`).
+
+### Smoke-test a desktop build
+
+Run through this on each OS after building (about five minutes):
+
+1. Launch: the dashboard opens (no blank window); the **MCP** badge is in the top-right.
+2. **New project**, draw a rectangle, press Space to play, press **F** for full screen, Esc to leave.
+3. **Open file…** a `.lottie` from `samples/`, edit it, **Ctrl/⌘+S**: the file on disk changes
+   (its card shows *Saved to file*). Quit, relaunch, reopen it from the dashboard: it reads from disk.
+4. **Export** GIF, Animated WebP and WebM with *Transparent* background; open them in a browser over
+   a coloured page to confirm the background is see-through.
+5. **MCP** badge → copy the Claude Code command (the path points into the app-data folder), run it,
+   enable *Local MCP*, and ask the agent to read the scene.
+6. Drag the left, right and timeline edges; double-click an edge to reset it.
 
 ## 4. Build the MCP server
 
