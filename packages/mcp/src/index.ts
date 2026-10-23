@@ -7,7 +7,7 @@ import { Bridge, DEFAULT_PORT } from "./bridge.js";
 import { HOST_TOOLS } from "./hostTools.js";
 import catalogJson from "../catalog.json" with { type: "json" };
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const log = (m: string) => process.stderr.write(`[lumetrope-mcp] ${m}\n`);
 
 interface ToolDef {

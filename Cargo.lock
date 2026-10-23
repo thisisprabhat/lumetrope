@@ -1844,7 +1844,7 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "lumetrope-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64 0.22.1",
  "flate2",
@@ -1861,7 +1861,7 @@ dependencies = [
 
 [[package]]
 name = "lumetrope-desktop"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde_json",
  "tauri",
@@ -1873,7 +1873,7 @@ dependencies = [
 
 [[package]]
 name = "lumetrope-wasm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "lumetrope-core",
  "serde_json",

@@ -250,9 +250,9 @@ supported, so use the CI workflow to get all three.
 
 | Platform | Command | Output (under `target/release/bundle/`) |
 |---|---|---|
-| macOS | `pnpm --filter @lumetrope/desktop build:mac` | `macos/Lumetrope.app`, `dmg/Lumetrope_0.1.0_<arch>.dmg` |
+| macOS | `pnpm --filter @lumetrope/desktop build:mac` | `macos/Lumetrope.app`, `dmg/Lumetrope_0.1.1_<arch>.dmg` |
 | macOS universal | `pnpm --filter @lumetrope/desktop build:mac-universal` | as above, under `target/universal-apple-darwin/release/bundle/` |
-| Windows | `pnpm --filter @lumetrope/desktop build:windows` | `nsis\Lumetrope_0.1.0_x64-setup.exe`, `msi\Lumetrope_0.1.0_x64_en-US.msi` |
+| Windows | `pnpm --filter @lumetrope/desktop build:windows` | `nsis\Lumetrope_0.1.1_x64-setup.exe`, `msi\Lumetrope_0.1.1_x64_en-US.msi` |
 | Windows on ARM | `pnpm --filter @lumetrope/desktop build:windows-arm` (after `rustup target add aarch64-pc-windows-msvc`) | `target\aarch64-pc-windows-msvc\release\bundle\nsis\…-setup.exe` (MSI can't target ARM64) |
 | Linux | `pnpm --filter @lumetrope/desktop build:linux` | `deb/*.deb`, `rpm/*.rpm`, `appimage/*.AppImage` |
 | Linux, from any OS with Docker | `docker build -f docker/linux-desktop.Dockerfile --output docker/out .` | `docker/out/*.deb`, `*.rpm`, `*.AppImage` (for the Docker host's CPU architecture) |

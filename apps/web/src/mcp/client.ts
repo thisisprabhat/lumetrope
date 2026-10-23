@@ -27,7 +27,7 @@ function connect() {
   ws.onopen = () => {
     attempt = 0;
     setStatus("connected");
-    ws?.send(JSON.stringify({ type: "hello", app: "lumetrope", version: "0.1.0" }));
+    ws?.send(JSON.stringify({ type: "hello", app: "lumetrope", version: "0.1.1" }));
     useEditor.getState().toast("Local MCP bridge connected");
   };
   ws.onmessage = async (ev) => {
