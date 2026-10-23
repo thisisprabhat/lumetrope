@@ -39,6 +39,7 @@ RUN pnpm install --frozen-lockfile
 # Copy remaining source code
 COPY packages/mcp ./packages/mcp
 COPY apps/web ./apps/web
+COPY samples ./samples
 
 # Copy compiled WASM from builder-wasm stage
 COPY --from=builder-wasm /app/apps/web/src/wasm ./apps/web/src/wasm
