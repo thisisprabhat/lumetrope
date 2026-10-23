@@ -8,6 +8,15 @@ and Linux (Tauri).
 > Lumetrope = *lumen* (light) + *-trope* (turning) — the family of optical toys (zoetrope,
 > thaumatrope) that first made pictures move.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Project home with interactive samples](docs/screenshots/home.jpg) | ![Animate view: layers, canvas, properties and keyframe timeline](docs/screenshots/editor.jpg) |
+| **Home** — your animations with version history, plus interactive samples | **Animate** — layers, canvas, properties and a keyframe timeline with segments |
+| ![State-machine node graph with live preview](docs/screenshots/state-machine.jpg) | ![Export dialog: dotLottie, Lottie JSON, GIF, WebP, WebM](docs/screenshots/export.jpg) |
+| **State Machine** — node-graph editor for dotLottie 2.0 interactivity | **Export** — dotLottie, Lottie JSON, and transparent GIF / WebP / WebM |
+
 ## Features
 
 **Create & edit**
