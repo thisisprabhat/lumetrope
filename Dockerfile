@@ -1,5 +1,5 @@
 # Multi-stage build for Lumetrope Web + WASM
-FROM rust:1.85-slim AS builder-wasm
+FROM rust:latest AS builder-wasm
 
 # Install curl, build-essential and wasm-pack
 RUN apt-get update && apt-get install -y --no-install-recommends \
