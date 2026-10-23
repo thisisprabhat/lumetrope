@@ -4,33 +4,70 @@ import { useEditor } from "../store";
 import { Icon } from "../components/Icon";
 import { NumberField, PropRow, Section, Select, Toggle } from "../ui/controls";
 import { keyLabel } from "../lib/keys";
+import "./alignbar.css";
 
 const BLEND = ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color_dodge", "color_burn", "hard_light", "soft_light", "difference", "exclusion", "hue", "saturation", "color", "luminosity", "add"];
 const ANCHORS = ["top_left", "top", "top_right", "left", "center", "right", "bottom_left", "bottom", "bottom_right"];
 const label = (s: string) => s.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
+type AlignIconName = "left" | "center" | "right" | "top" | "middle" | "bottom" | "horizontal" | "vertical";
+
+/** Align/distribute glyphs: the reference edge in amber, the shapes solid. */
+function AlignIcon({ name }: { name: AlignIconName }) {
+  const edge = (x1: number, y1: number, x2: number, y2: number) => <line x1={x1} y1={y1} x2={x2} y2={y2} className="ai-edge" />;
+  const box = (x: number, y: number, w: number, h: number) => <rect x={x} y={y} width={w} height={h} rx={0.9} className="ai-box" />;
+  const parts: Record<AlignIconName, JSX.Element> = {
+    left: <>{edge(2.5, 2, 2.5, 14)}{box(4.5, 4, 8.5, 3)}{box(4.5, 9, 5, 3)}</>,
+    center: <>{edge(8, 1.5, 8, 14.5)}{box(3, 4, 10, 3)}{box(5, 9, 6, 3)}</>,
+    right: <>{edge(13.5, 2, 13.5, 14)}{box(3, 4, 8.5, 3)}{box(6.5, 9, 5, 3)}</>,
+    top: <>{edge(2, 2.5, 14, 2.5)}{box(4, 4.5, 3, 8.5)}{box(9, 4.5, 3, 5)}</>,
+    middle: <>{edge(1.5, 8, 14.5, 8)}{box(4, 3, 3, 10)}{box(9, 5, 3, 6)}</>,
+    bottom: <>{edge(2, 13.5, 14, 13.5)}{box(4, 3, 3, 8.5)}{box(9, 6.5, 3, 5)}</>,
+    horizontal: <>{edge(2.5, 2, 2.5, 14)}{edge(13.5, 2, 13.5, 14)}{box(6.5, 4, 3, 8)}</>,
+    vertical: <>{edge(2, 2.5, 14, 2.5)}{edge(2, 13.5, 14, 13.5)}{box(4, 6.5, 8, 3)}</>,
+  };
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
+      {parts[name]}
+    </svg>
+  );
+}
+
 export function AlignBar({ ids }: { ids: string[] }) {
   const to = ids.length > 1 ? "selection" : "scene";
-  const btn = (align: string, glyph: string) => (
-    <button className="icon-btn align-btn" data-tip={`Align ${align}`} onClick={() => act("align_layers", { layers: ids, align, to })}>
-      <span className={`align-glyph ${align}`}>{glyph}</span>
+  const target = ids.length > 1 ? "selection" : "canvas";
+  const btn = (align: AlignIconName, label: string) => (
+    <button className="align-btn" data-tip={`Align ${label} (to ${target})`} aria-label={`Align ${label}`} onClick={() => act("align_layers", { layers: ids, align, to })}>
+      <AlignIcon name={align} />
+    </button>
+  );
+  const canDistribute = ids.length >= 3;
+  const dist = (axis: "horizontal" | "vertical") => (
+    <button
+      className="align-btn"
+      data-tip={canDistribute ? `Distribute ${axis}ly` : "Select 3 or more layers to distribute"}
+      aria-label={`Distribute ${axis}ly`}
+      disabled={!canDistribute}
+      onClick={() => act("distribute_layers", { layers: ids, axis })}
+    >
+      <AlignIcon name={axis} />
     </button>
   );
   return (
     <div className="alignbar">
-      {btn("left", "⎸")}
-      {btn("center", "⎮")}
-      {btn("right", "⎹")}
-      {btn("top", "⎺")}
-      {btn("middle", "⎯")}
-      {btn("bottom", "⎽")}
-      <span className="sep" />
-      <button className="icon-btn" data-tip="Distribute horizontally" disabled={ids.length < 3} onClick={() => act("distribute_layers", { layers: ids, axis: "horizontal" })}>
-        ⇹
-      </button>
-      <button className="icon-btn" data-tip="Distribute vertically" disabled={ids.length < 3} onClick={() => act("distribute_layers", { layers: ids, axis: "vertical" })}>
-        ⇵
-      </button>
+      <div className="align-group" role="group" aria-label="Align">
+        {btn("left", "left")}
+        {btn("center", "horizontal centres")}
+        {btn("right", "right")}
+        <span className="align-div" />
+        {btn("top", "top")}
+        {btn("middle", "vertical centres")}
+        {btn("bottom", "bottom")}
+      </div>
+      <div className="align-group" role="group" aria-label="Distribute">
+        {dist("horizontal")}
+        {dist("vertical")}
+      </div>
     </div>
   );
 }

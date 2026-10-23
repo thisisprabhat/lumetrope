@@ -1,0 +1,276 @@
+/* State-machine graph: colour-coded nodes (by kind), transitions (by type) and
+   guard chips (by input type). Loaded after styles.css, so these win. */
+
+.sm-graph {
+  position: relative;
+  height: 100%;
+  background:
+    radial-gradient(900px 360px at 12% 0%, rgba(111, 211, 255, 0.06), transparent 70%),
+    radial-gradient(700px 320px at 90% 100%, rgba(182, 156, 255, 0.06), transparent 70%),
+    var(--bg-0);
+}
+
+.sm-graph .react-flow {
+  --xy-background-color: transparent;
+  --xy-edge-stroke: #7f8fa0;
+  --xy-edge-stroke-selected: #ffffff;
+  --xy-edge-label-color: var(--text-1);
+  --xy-controls-button-background-color: var(--bg-2);
+  --xy-controls-button-background-color-hover: var(--bg-3);
+  --xy-controls-button-color: var(--text-0);
+  --xy-controls-button-color-hover: var(--lume);
+  --xy-controls-button-border-color: var(--line-strong);
+  --xy-minimap-background-color: rgba(17, 19, 22, 0.92);
+}
+
+.sm-graph .react-flow__controls {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--line-strong);
+}
+
+.sm-graph .react-flow__minimap {
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+}
+
+/* edges */
+
+.sm-graph .react-flow__edge-path {
+  transition: stroke-width 0.12s;
+}
+
+.sm-graph .react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2.6px !important;
+}
+
+.sm-graph .react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 2.6px !important;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.35));
+}
+
+.sm-graph .global-edge .react-flow__edge-path {
+  stroke-dasharray: 6 5;
+}
+
+.sm-graph .react-flow__edge-text {
+  font-family: var(--font-num);
+  font-size: 10px;
+}
+
+/* nodes */
+
+.sm-graph .react-flow__node {
+  /* No transition on transform: position updates must not trail the pointer. */
+  transition: none;
+}
+
+.smn {
+  --k: #6fd3ff;
+  position: relative;
+  min-width: 184px;
+  max-width: 260px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--k) 45%, var(--line-strong));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--k) 20%, #1a1e23) 0, color-mix(in srgb, var(--k) 8%, #171a1e) 34px, #15181c 34px);
+  color: var(--text-0);
+  box-shadow:
+    inset 3px 0 0 var(--k),
+    0 10px 24px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.smn:active {
+  cursor: grabbing;
+}
+
+.smn.kind-global {
+  border-style: dashed;
+}
+
+.smn-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 10px 0 12px;
+}
+
+.smn-badge {
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0e1013;
+  background: var(--k);
+}
+
+.smn-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smn-live {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font: 700 9px var(--font-num);
+  letter-spacing: 0.08em;
+  color: #0e1013;
+  background: #7ee2a8;
+  animation: smn-pulse 1.4s ease-in-out infinite;
+}
+
+.smn-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 10px 10px 12px;
+}
+
+.smn-chip {
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  color: var(--text-1);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.smn-chip.smn-seg {
+  color: color-mix(in srgb, var(--k) 70%, #ffffff);
+  border-color: color-mix(in srgb, var(--k) 35%, transparent);
+  background: color-mix(in srgb, var(--k) 10%, transparent);
+}
+
+.smn.sel {
+  border-color: var(--k);
+  box-shadow:
+    inset 3px 0 0 var(--k),
+    0 0 0 2px color-mix(in srgb, var(--k) 55%, transparent),
+    0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+.smn.live {
+  box-shadow:
+    inset 3px 0 0 var(--k),
+    0 0 0 2px rgba(126, 226, 168, 0.75),
+    0 0 26px rgba(126, 226, 168, 0.35),
+    0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+.smn-handle.react-flow__handle {
+  width: 11px;
+  height: 11px;
+  border: 2px solid #0e1013;
+  background: var(--k);
+  transition: transform 0.12s;
+}
+
+.smn-handle.react-flow__handle:hover {
+  transform: translate(var(--hx, 0), -50%) scale(1.35);
+}
+
+.smn-handle.react-flow__handle-left {
+  --hx: -50%;
+}
+
+.smn-handle.react-flow__handle-right {
+  --hx: 50%;
+}
+
+@keyframes smn-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* legend */
+
+.sm-legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(17, 19, 22, 0.85);
+  border: 1px solid var(--line);
+  font-size: 10.5px;
+  color: var(--text-1);
+  pointer-events: none;
+}
+
+.sm-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sm-legend span::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--k);
+}
+
+.sm-legend .tween::before {
+  width: 14px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px dashed #ffb340;
+  background: none;
+}
+
+.sm-graph .sm-empty {
+  color: var(--text-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smn-live {
+    animation: none;
+  }
+}
+
+/* transition guard pills (HTML, above the edges) */
+
+.sm-edge-label {
+  position: absolute;
+  z-index: 4;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: color-mix(in srgb, var(--c) 14%, #121519);
+  color: var(--c);
+  font: 600 10.5px var(--font-num);
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: all;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: background 0.12s, box-shadow 0.12s;
+}
+
+.sm-edge-label:hover {
+  background: color-mix(in srgb, var(--c) 24%, #121519);
+}
+
+.sm-edge-label.sel {
+  border-color: var(--c);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--c) 40%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.45);
+}
