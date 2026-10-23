@@ -132,7 +132,26 @@ textarea {
   border-radius: 50%;
   color: var(--lume);
   filter: drop-shadow(0 0 5px var(--lume-glow));
+}
+
+.wordmark .disc .ring,
+.wordmark .disc .dot {
+  transform-origin: 10px 10px;
+}
+
+.wordmark .disc .ring {
   animation: spin 8s linear infinite;
+}
+
+.wordmark .disc .dot {
+  animation: dot-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  50% {
+    transform: scale(0.7);
+    opacity: 0.75;
+  }
 }
 
 @keyframes spin {

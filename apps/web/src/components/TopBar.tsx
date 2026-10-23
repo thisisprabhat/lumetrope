@@ -33,7 +33,8 @@ export function TopBar() {
     <header className="topbar">
       <button className="wordmark home-btn" onClick={commands.home} data-tip="All projects (Home)">
         <svg className="disc" viewBox="0 0 20 20" aria-hidden>
-          <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3.2" strokeDasharray="5.5 5.5" />
+          <circle className="ring" cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3.2" strokeDasharray="8.5 2.5" strokeDashoffset="-1.25" />
+          <circle className="dot" cx="10" cy="10" r="1.8" fill="currentColor" />
         </svg>
         Lumetrope
       </button>
