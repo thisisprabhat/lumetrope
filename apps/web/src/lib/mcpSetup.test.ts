@@ -23,16 +23,16 @@ describe("shellQuote", () => {
 
 describe("mcpSnippets", () => {
   it("gives exact macOS commands and config", () => {
-    const s = byId(mcpSnippets("/Users/me/Library/Application Support/app.lumetrope.editor/mcp/lumetrope-mcp.mjs", "mac"));
-    expect(s.claude.code).toBe('claude mcp add --scope user lumetrope -- node "/Users/me/Library/Application Support/app.lumetrope.editor/mcp/lumetrope-mcp.mjs"');
-    expect(s.codex.code).toBe('codex mcp add lumetrope -- node "/Users/me/Library/Application Support/app.lumetrope.editor/mcp/lumetrope-mcp.mjs"');
-    expect(JSON.parse(s.json.code)).toEqual({ mcpServers: { lumetrope: { command: "node", args: ["/Users/me/Library/Application Support/app.lumetrope.editor/mcp/lumetrope-mcp.mjs"] } } });
+    const s = byId(mcpSnippets("/Users/me/Library/Application Support/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs", "mac"));
+    expect(s.claude.code).toBe('claude mcp add --scope user lumetrope -- node "/Users/me/Library/Application Support/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs"');
+    expect(s.codex.code).toBe('codex mcp add lumetrope -- node "/Users/me/Library/Application Support/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs"');
+    expect(JSON.parse(s.json.code)).toEqual({ mcpServers: { lumetrope: { command: "node", args: ["/Users/me/Library/Application Support/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs"] } } });
     expect(s.json.where).toContain("~/Library/Application Support/Claude/claude_desktop_config.json");
-    expect(s.toml.code).toBe('[mcp_servers.lumetrope]\ncommand = "node"\nargs = ["/Users/me/Library/Application Support/app.lumetrope.editor/mcp/lumetrope-mcp.mjs"]');
+    expect(s.toml.code).toBe('[mcp_servers.lumetrope]\ncommand = "node"\nargs = ["/Users/me/Library/Application Support/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs"]');
   });
 
   it("escapes Windows backslashes in JSON and TOML but not in the shell command", () => {
-    const p = "C:\\Users\\Me\\AppData\\Roaming\\app.lumetrope.editor\\mcp\\lumetrope-mcp.mjs";
+    const p = "C:\\Users\\Me\\AppData\\Roaming\\com.waygosquad.lumetrope\\mcp\\lumetrope-mcp.mjs";
     const s = byId(mcpSnippets(p, "windows"));
     expect(s.claude.code).toBe(`claude mcp add --scope user lumetrope -- node "${p}"`);
     expect(s.json.code).toContain('"C:\\\\Users\\\\Me\\\\AppData');
@@ -43,7 +43,7 @@ describe("mcpSnippets", () => {
   });
 
   it("omits Claude Desktop paths on Linux, where it isn't available", () => {
-    const s = byId(mcpSnippets("/home/me/.local/share/app.lumetrope.editor/mcp/lumetrope-mcp.mjs", "linux"));
+    const s = byId(mcpSnippets("/home/me/.local/share/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs", "linux"));
     expect(s.json.where).not.toContain("claude_desktop_config");
     expect(s.json.where).toContain("~/.cursor/mcp.json");
   });

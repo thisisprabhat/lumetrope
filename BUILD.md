@@ -310,9 +310,9 @@ to a fixed location, which its MCP dialog shows ready to paste:
 
 | OS | Installed server |
 |---|---|
-| macOS | `~/Library/Application Support/app.lumetrope.editor/mcp/lumetrope-mcp.mjs` |
-| Windows | `%APPDATA%\app.lumetrope.editor\mcp\lumetrope-mcp.mjs` |
-| Linux | `~/.local/share/app.lumetrope.editor/mcp/lumetrope-mcp.mjs` |
+| macOS | `~/Library/Application Support/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs` |
+| Windows | `%APPDATA%\com.waygosquad.lumetrope\mcp\lumetrope-mcp.mjs` |
+| Linux | `~/.local/share/com.waygosquad.lumetrope/mcp/lumetrope-mcp.mjs` |
 
 Register the repository build with your agent. Claude Code, macOS/Linux:
 
