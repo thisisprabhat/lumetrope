@@ -13,9 +13,10 @@ RUN curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
 WORKDIR /app
 
-# Copy crates source
+# Copy crates and workspace members referenced in Cargo.toml
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
 
 # Build WASM bundle
 RUN wasm-pack build crates/wasm --target web --release --out-dir /app/apps/web/src/wasm
