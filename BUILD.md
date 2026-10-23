@@ -184,9 +184,53 @@ pnpm build          # → apps/web/dist
 pnpm --filter @lumetrope/web preview   # serve the build locally to check it
 ```
 
-`apps/web/dist` is a static site. Host it on any static file server; just make sure `.wasm` files
-are served as `application/wasm`. Version history and autosave live in the browser's IndexedDB, so
-no backend is needed.
+`apps/web/dist` is a static site. See [Deploy the web app](#deploy-the-web-app).
+
+### Deploy the web app
+
+`apps/web/dist` is a plain static site (HTML, JS, CSS, fonts and one `.wasm` file) with relative
+asset paths, so it works at a domain root or under any sub-path (`https://example.com/lumetrope/`).
+There is no backend: projects, thumbnails and version history live in each visitor's browser
+(IndexedDB).
+
+- **Serve it over https.** Browsers only offer some features on secure pages: File System Access
+  (⌘S saving back into the file you opened, Chrome/Edge), WebCodecs (WebM export) and clipboard
+  paste. Over plain http Lumetrope still works, with these fallbacks: Open uses a file picker,
+  Save downloads the file, and WebM export is disabled with an explanation.
+- **Serve `.wasm` as `application/wasm`** (nginx, Caddy, Netlify, Cloudflare Pages, GitHub Pages
+  and S3 do by default). With a wrong type it still loads, just slower.
+- **Cache:** everything under `assets/` has a content hash in its name, so it can be cached
+  forever. Don't cache `index.html` for long.
+- **MCP:** a deployed web copy can't reach an MCP server on a visitor's machine (the bridge only
+  accepts local Lumetrope windows, and browsers restrict public sites from reaching localhost), so
+  the MCP badge and setup are hidden there. They appear in the desktop app and when Lumetrope is
+  served from the same machine (`localhost`). Browsers with WebMCP still get the tools in-page.
+
+nginx:
+
+```nginx
+server {
+  listen 443 ssl;
+  server_name lumetrope.example.com;
+  root /srv/lumetrope;            # contents of apps/web/dist
+  types { application/wasm wasm; }
+  location /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }
+  location = /index.html { add_header Cache-Control "no-cache"; }
+}
+```
+
+Caddy:
+
+```caddy
+lumetrope.example.com {
+  root * /srv/lumetrope
+  file_server
+  header /assets/* Cache-Control "public, max-age=31536000, immutable"
+}
+```
+
+Check a build locally before uploading:
+`pnpm --filter @lumetrope/web preview` (or any static server pointed at `apps/web/dist`).
 
 ## 3. Build the desktop app
 

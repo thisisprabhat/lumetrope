@@ -108,7 +108,9 @@ claude mcp add lumetrope -- node "$(pwd)/packages/mcp/dist/lumetrope-mcp.mjs"
 
 (Windows PowerShell: `claude mcp add lumetrope -- node "$PWD\packages\mcp\dist\lumetrope-mcp.mjs"`.)
 
-Easiest: click the **MCP** badge in Lumetrope. It shows the exact command and config text for
+MCP needs the desktop app or a copy of Lumetrope served from your own machine (`localhost`); a
+web copy deployed to a server hides MCP, because websites can't reach an MCP server on a visitor's
+computer. Easiest: click the **MCP** badge in Lumetrope. It shows the exact command and config text for
 your OS (Claude Code, Codex, Cursor, Claude Desktop) with the real server path; the desktop app
 installs its own copy of the server, so no repository checkout is needed. Then turn on
 **Local MCP**. Ask your agent to

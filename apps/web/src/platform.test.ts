@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultRenderer, dialogFilters, isTauri } from "./platform";
+import { defaultRenderer, dialogFilters, isTauri, localMcpSupported } from "./platform";
 
 describe("platform", () => {
   it("detects the Tauri shell", () => {
@@ -16,5 +16,10 @@ describe("platform", () => {
     expect(defaultRenderer("cpu", true)).toBe("cpu");
     expect(defaultRenderer("gpu", false)).toBe("gpu");
     expect(defaultRenderer("bogus", false)).toBe("cpu");
+  });
+  it("offers local MCP only where the bridge can be reached", () => {
+    expect(localMcpSupported({ __TAURI_INTERNALS__: {}, location: { hostname: "tauri.localhost" } })).toBe(true);
+    for (const host of ["localhost", "127.0.0.1", "[::1]", "::1", "studio.localhost"]) expect(localMcpSupported({ location: { hostname: host } })).toBe(true);
+    for (const host of ["lumetrope.example.com", "192.168.1.20", "localhost.evil.com"]) expect(localMcpSupported({ location: { hostname: host } })).toBe(false);
   });
 });

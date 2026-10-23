@@ -4,6 +4,7 @@ import { engine } from "../engine";
 import { useEditor } from "../store";
 import { runTool } from "./host";
 import { backoffMs, parseRequest, response } from "./protocol";
+import { localMcpSupported } from "../platform";
 
 export const MCP_PORT = 47321;
 let ws: WebSocket | null = null;
@@ -77,6 +78,9 @@ export function setLocalMcp(on: boolean) {
 }
 
 export function initMcp() {
+  // In-browser WebMCP works on any origin that supports it; the local bridge only on this machine.
+  registerWebMcp();
+  if (!localMcpSupported()) return;
   let on = false;
   try {
     on = localStorage.getItem("lumetrope.mcp") === "1";
@@ -84,7 +88,6 @@ export function initMcp() {
     /* ignore */
   }
   if (on) setLocalMcp(true);
-  registerWebMcp();
 }
 
 /** WebMCP (navigator.modelContext): expose the same tools to in-browser agents. */

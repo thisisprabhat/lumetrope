@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { detectOS, mcpSnippets, type OS } from "../lib/mcpSetup";
 import { MCP_PORT, setLocalMcp } from "../mcp/client";
-import { mcpServerPath } from "../platform";
+import { localMcpSupported, mcpServerPath } from "../platform";
 import { useEditor } from "../store";
 import { Toggle } from "../ui/controls";
 import { Icon } from "./Icon";
@@ -11,6 +11,8 @@ const STATUS: Record<string, string> = { off: "Off", connecting: "Waiting for lu
 export function McpBadge() {
   const status = useEditor((s) => s.mcpStatus);
   const webMcp = useEditor((s) => s.webMcp);
+  // A deployed web copy can't reach a local MCP server: show nothing unless WebMCP is live.
+  if (!localMcpSupported() && !webMcp) return null;
   return (
     <button className={`mcp-badge s-${status}`} onClick={() => useEditor.setState({ mcpHelpOpen: true })} data-tip="AI agents via MCP">
       <span className="dot" />
@@ -52,6 +54,22 @@ export function McpDialog() {
   useEffect(() => {
     mcpServerPath().then(setServer, (e) => setError(String(e)));
   }, []);
+  if (!localMcpSupported())
+    return (
+      <div className="modal-backdrop" onPointerDown={(e) => e.target === e.currentTarget && close()}>
+        <div className="modal" role="dialog" aria-label="MCP">
+          <header className="modal-head">
+            <span>AI agents in this browser (WebMCP)</span>
+            <button className="icon-btn" onClick={close} aria-label="Close">
+              <Icon name="close" />
+            </button>
+          </header>
+          <div className="modal-body">
+            <p className="muted">This browser exposes Lumetrope's editing tools to in-browser agents through WebMCP. Agents like Claude Code connect through the desktop app or a copy of Lumetrope running on your own computer.</p>
+          </div>
+        </div>
+      </div>
+    );
   return (
     <div className="modal-backdrop" onPointerDown={(e) => e.target === e.currentTarget && close()}>
       <div className="modal wide" role="dialog" aria-label="MCP">

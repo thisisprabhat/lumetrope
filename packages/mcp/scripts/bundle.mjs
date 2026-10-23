@@ -3,11 +3,12 @@
 // the desktop app's resources.
 import { build } from "esbuild";
 import { rmSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 rmSync(new URL("../dist", import.meta.url), { recursive: true, force: true });
 await build({
-  entryPoints: [new URL("../src/index.ts", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")],
-  outfile: new URL("../dist/lumetrope-mcp.mjs", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"),
+  entryPoints: [fileURLToPath(new URL("../src/index.ts", import.meta.url))],
+  outfile: fileURLToPath(new URL("../dist/lumetrope-mcp.mjs", import.meta.url)),
   bundle: true,
   platform: "node",
   format: "esm",

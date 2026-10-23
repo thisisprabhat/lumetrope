@@ -190,12 +190,12 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
                         className={`export-format ${format === f.id ? "on" : ""}`}
                         disabled={unavailable || disabled}
                         onClick={() => setFormat(f.id)}
-                        title={unavailable ? "No VP8/VP9 video encoder (WebCodecs) in this window" : undefined}
+                        title={unavailable ? (window.isSecureContext ? "No VP8/VP9 video encoder (WebCodecs) in this window" : "Browsers only offer video encoding (WebCodecs) on https pages") : undefined}
                       >
                         <span className="export-ext num">{f.ext}</span>
                         <span className="export-format-text">
                           <strong>{f.title}</strong>
-                          <span>{unavailable ? "Needs a WebCodecs video encoder (Chrome, Edge, Windows app)" : note}</span>
+                          <span>{unavailable ? (window.isSecureContext ? "Needs a WebCodecs video encoder (Chrome, Edge, Windows app)" : "Needs a secure page: serve Lumetrope over https") : note}</span>
                         </span>
                         <span className="export-radio" aria-hidden />
                       </button>

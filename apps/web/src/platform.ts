@@ -74,3 +74,14 @@ export async function mcpServerPath(): Promise<{ path: string; source: "app" | "
   }
   return { path: __LUMETROPE_MCP_PATH__, source: "build" };
 }
+
+/**
+ * Can this window use the local MCP bridge (ws://127.0.0.1)? Only the desktop app and pages
+ * served from this machine: the bridge accepts local origins only, and browsers restrict public
+ * websites from reaching localhost. A deployed web copy hides MCP instead of offering a dead end.
+ */
+export function localMcpSupported(win: any = typeof window !== "undefined" ? window : {}): boolean {
+  if (isTauri(win)) return true;
+  const host = String(win?.location?.hostname ?? "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "::1" || host.endsWith(".localhost");
+}

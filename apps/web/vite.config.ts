@@ -19,6 +19,8 @@ const localSamples = {
 };
 
 export default defineConfig({
+  // Relative asset URLs: the built site works at a domain root or under any sub-path.
+  base: "./",
   plugins: [react(), localSamples],
   // Where `pnpm --filter lumetrope-mcp build` puts the single-file MCP server on
   // this machine; the browser build shows it in the MCP dialog (the desktop app

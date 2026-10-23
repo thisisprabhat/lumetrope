@@ -28,6 +28,7 @@ import {
   storageUsage,
   type ProjectMeta,
 } from "../persist";
+import { localMcpSupported } from "../platform";
 import { useEditor } from "../store";
 import { Icon } from "./Icon";
 import { McpBadge } from "./McpDialog";
@@ -191,10 +192,12 @@ function StartRail({ count }: { count: number }) {
       </div>
 
       <div className="rail-foot">
-        <button className="rail-action" onClick={() => useEditor.setState({ mcpHelpOpen: true })}>
-          <Icon name="mcp" size={15} />
-          <span>Connect an AI agent</span>
-        </button>
+        {localMcpSupported() && (
+          <button className="rail-action" onClick={() => useEditor.setState({ mcpHelpOpen: true })}>
+            <Icon name="mcp" size={15} />
+            <span>Connect an AI agent</span>
+          </button>
+        )}
         <div className="rail-meta">
           <span>
             {count} project{count === 1 ? "" : "s"} on this device

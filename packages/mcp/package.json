@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit && node scripts/bundle.mjs",
     "catalog": "cargo run -q -p lumetrope-core --bin catalog > catalog.json",
-    "test": "vitest run",
+    "test": "node scripts/bundle.mjs && vitest run",
     "start": "node dist/lumetrope-mcp.mjs"
   },
   "dependencies": {
