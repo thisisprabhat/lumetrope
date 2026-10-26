@@ -4,6 +4,7 @@
 
 pub mod assets;
 pub mod catalog;
+pub mod colors;
 pub mod fx;
 pub mod keys;
 pub mod layers;

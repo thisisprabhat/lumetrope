@@ -291,3 +291,49 @@ impl WebmWriter {
         self.inner.finish(duration_ms)
     }
 }
+
+/// Builds a zip in memory: `add` entries, then `finish`.
+#[wasm_bindgen]
+#[derive(Default)]
+pub struct ZipBuilder {
+    entries: Vec<(String, Vec<u8>)>,
+}
+
+#[wasm_bindgen]
+impl ZipBuilder {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> ZipBuilder {
+        ZipBuilder::default()
+    }
+
+    pub fn add(&mut self, name: &str, bytes: Vec<u8>) {
+        self.entries.push((name.to_string(), bytes));
+    }
+
+    pub fn finish(self) -> Result<Vec<u8>, JsValue> {
+        lumetrope_core::archive::pack(&self.entries).map_err(err)
+    }
+}
+
+/// Reads every file of a zip up front; `names` lists them, `read` returns one.
+#[wasm_bindgen]
+pub struct ZipReader {
+    entries: Vec<(String, Vec<u8>)>,
+}
+
+#[wasm_bindgen]
+impl ZipReader {
+    #[wasm_bindgen(constructor)]
+    pub fn new(bytes: &[u8]) -> Result<ZipReader, JsValue> {
+        lumetrope_core::archive::unpack(bytes).map(|entries| ZipReader { entries }).map_err(err)
+    }
+
+    /// JSON array of entry names.
+    pub fn names(&self) -> String {
+        serde_json::to_string(&self.entries.iter().map(|e| e.0.as_str()).collect::<Vec<_>>()).unwrap_or_else(|_| "[]".into())
+    }
+
+    pub fn read(&self, name: &str) -> Option<Vec<u8>> {
+        self.entries.iter().find(|e| e.0 == name).map(|e| e.1.clone())
+    }
+}

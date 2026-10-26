@@ -30,12 +30,27 @@ export interface ProjectData {
   history: Uint8Array;
 }
 
-const DB = "lumetrope";
+/** Database of the default workspace; other browser workspaces get their own. */
+export const DEFAULT_DB = "lumetrope";
 const VERSION = 2;
 
-function openDb(factory: IDBFactory): Promise<IDBDatabase> {
+/** Where projects are kept: IndexedDB here, or a folder on disk (see folder.ts). */
+export interface Library {
+  list(): Promise<ProjectMeta[]>;
+  getMeta(id: string): Promise<ProjectMeta | undefined>;
+  getData(id: string): Promise<ProjectData | undefined>;
+  /** Write metadata, and project data when given. */
+  put(meta: ProjectMeta, data?: ProjectData): Promise<void>;
+  patch(id: string, changes: Partial<ProjectMeta>): Promise<ProjectMeta | undefined>;
+  remove(id: string): Promise<void>;
+  findByLink(link: FileLink): Promise<ProjectMeta | undefined>;
+  /** Release the storage (lets a deleted workspace's database actually go). */
+  close?(): Promise<void>;
+}
+
+function openDb(factory: IDBFactory, name: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = factory.open(DB, VERSION);
+    const req = factory.open(name, VERSION);
     req.onupgradeneeded = (ev) => {
       const db = req.result;
       const old = ev.oldVersion;
@@ -73,17 +88,17 @@ function req<T>(r: IDBRequest<T>): Promise<T> {
   });
 }
 
-async function sameLink(a: FileLink | undefined, b: FileLink): Promise<boolean> {
+export async function sameLink(a: FileLink | undefined, b: FileLink): Promise<boolean> {
   if (!a || a.kind !== b.kind) return false;
   if (a.kind === "path" && b.kind === "path") return a.path === b.path;
   if (a.kind === "handle" && b.kind === "handle") return a.handle.isSameEntry(b.handle).catch(() => false);
   return false;
 }
 
-export function createLibrary(factory?: IDBFactory) {
+export function createLibrary(factory?: IDBFactory, name = DEFAULT_DB): Library {
   let dbp: Promise<IDBDatabase> | null = null;
-  const db = () => (dbp ??= openDb(factory ?? indexedDB).catch((e) => ((dbp = null), Promise.reject(e))));
-  const lib = {
+  const db = () => (dbp ??= openDb(factory ?? indexedDB, name).catch((e) => ((dbp = null), Promise.reject(e))));
+  const lib: Library = {
     async list(): Promise<ProjectMeta[]> {
       return req((await db()).transaction("meta").objectStore("meta").getAll());
     },
@@ -121,8 +136,11 @@ export function createLibrary(factory?: IDBFactory) {
       for (const m of await lib.list()) if (await sameLink(m.file?.link, link)) return m;
       return undefined;
     },
+    async close() {
+      const p = dbp;
+      dbp = null;
+      (await p?.catch(() => null))?.close();
+    },
   };
   return lib;
 }
-
-export type Library = ReturnType<typeof createLibrary>;

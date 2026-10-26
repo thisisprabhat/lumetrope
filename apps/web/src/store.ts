@@ -4,6 +4,7 @@ import { centerCamera, fitCamera, nextStep, zoomAt, type Camera, type WheelMode 
 import { clampFrame } from "./lib/time";
 import { canvasFilterSupported, defaultRenderer } from "./platform";
 import type { ProjectMeta } from "./library/db";
+import { currentWorkspace, type WorkspaceInfo, type WorkspaceStatus } from "./library/workspace";
 import { DEFAULT_PANES, type Panes } from "./lib/panes";
 
 export type Mode = "animate" | "state" | "preview";
@@ -64,6 +65,10 @@ interface EditorState {
   /** Dashboard (home) or the editor. */
   view: "home" | "editor";
   setView: (v: "home" | "editor") => void;
+  /** The workspace whose projects the dashboard shows, and whether it can be read. */
+  workspace: { info: WorkspaceInfo; status: WorkspaceStatus | "loading" };
+  /** Bumped when the library's contents change outside the dashboard (import, workspace switch). */
+  libraryTick: number;
   /** Library entry of the open project (null until it has one). */
   project: ProjectMeta | null;
   /** Full-screen player over everything else. */
@@ -149,6 +154,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   savedAt: 0,
   view: "home",
   setView: (view) => set({ view }),
+  workspace: { info: currentWorkspace(), status: "loading" },
+  libraryTick: 0,
   project: null,
   fullscreen: false,
   panes: loadPanes(),

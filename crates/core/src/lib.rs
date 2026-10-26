@@ -7,6 +7,7 @@ pub mod text;
 pub mod engine;
 pub mod project;
 pub mod dotlottie;
+pub mod archive;
 pub mod ops;
 pub mod hit;
 pub mod svg;

@@ -47,6 +47,10 @@ const paths: Record<string, string> = {
   graph: "M4 4h.01M12 4h.01M8 12h.01M4 4l8 0M4 4l4 8M12 4l-4 8",
   mcp: "M5.5 2.5v3M10.5 2.5v3M4 5.5h8v3a4 4 0 01-8 0zM8 12.5V14",
   more: "M4 8h.01M8 8h.01M12 8h.01",
+  shuffle: "M2 4.5h2.2c2.2 0 3.1 1.2 4 3.5s1.8 3.5 4 3.5H14M2 11.5h2.2c1 0 1.7-.3 2.3-.9M9.5 5.4c.6-.6 1.3-.9 2.3-.9H14M12 2.5l2 2-2 2M12 9.5l2 2-2 2",
+  import: "M8 2.5V10M5 7l3 3 3-3M3 9.5v4h10v-4",
+  folder: "M2 4.5h4l1.5 1.5H14v6.5H2z",
+  archive: "M2.5 3h11v3h-11zM3.5 6v7h9V6M6.5 8.5h3",
   copy: "M5.5 5.5h8v8h-8zM2.5 10.5v-8h8",
 };
 

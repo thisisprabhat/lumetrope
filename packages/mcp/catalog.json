@@ -92,8 +92,40 @@
     "mutates": true
   },
   {
+    "name": "set_scene_settings",
+    "description": "Change the active animation's canvas size, frame rate, duration (in frames) or name. Omitted fields are left unchanged.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "fps": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "duration_frames": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Out point (op) in frames"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
     "name": "list_colors",
-    "description": "List every unique colour used by fills, strokes, solids and text, with usage counts — useful for recolouring.",
+    "description": "List every unique colour used by fills, strokes, gradient stops, solids, text and effect colours, with usage counts — useful for recolouring.",
     "inputSchema": {
       "type": "object",
       "properties": {},
@@ -104,7 +136,7 @@
   },
   {
     "name": "replace_color",
-    "description": "Replace a colour everywhere (fills, strokes, keyframes, solids, text). 'tolerance' 0..1 also matches near colours.",
+    "description": "Replace a colour everywhere (fills, strokes, gradients, keyframes, solids, text, effects). 'tolerance' 0..1 also matches near colours.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -133,30 +165,54 @@
     "mutates": true
   },
   {
-    "name": "set_scene_settings",
-    "description": "Change the active animation's canvas size, frame rate, duration (in frames) or name. Omitted fields are left unchanged.",
+    "name": "apply_color_map",
+    "description": "Recolour with a whole mapping at once, e.g. {\"#ff0000\": \"#223344\", \"#00ff00\": \"#ffcc00\"} (keys as reported by list_colors). Every swap happens simultaneously, so chains like A→B, B→C don't cascade. Alpha is kept. One undo step.",
     "inputSchema": {
       "type": "object",
       "properties": {
+        "map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "array"
+            ]
+          },
+          "description": "from colour (hex) → to colour"
+        }
+      },
+      "required": [
+        "map"
+      ],
+      "additionalProperties": false
+    },
+    "mutates": true
+  },
+  {
+    "name": "outline_only",
+    "description": "Black-and-white line-art look: every fill and gradient becomes a single-colour stroke outline (existing strokes are recoloured), text and effect colours take the line colour, solids and the background take the background colour. Layer blend modes reset to normal and blur / drop-shadow effects are switched off. Matte source layers are left alone so masking keeps working.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "line": {
+          "type": [
+            "string",
+            "array"
+          ],
+          "description": "Outline colour (default #000000)"
+        },
+        "background": {
+          "type": [
+            "string",
+            "array",
+            "null"
+          ],
+          "description": "Background colour (default #ffffff; null leaves the background unchanged)"
+        },
         "width": {
           "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "height": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "fps": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "duration_frames": {
-          "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Out point (op) in frames"
-        },
-        "name": {
-          "type": "string"
+          "description": "Width of outlines replacing fills (default 2)"
         }
       },
       "required": [],

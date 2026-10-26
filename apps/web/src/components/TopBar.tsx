@@ -8,6 +8,7 @@ import { Icon } from "./Icon";
 import { Menu } from "./Menu";
 import { McpBadge } from "./McpDialog";
 import { keyLabel } from "../lib/keys";
+import { exportAllData, importBackupFile } from "../workspaces";
 
 const TOOLS: { id: Tool; icon: string; tip: string }[] = [
   { id: "select", icon: "select", tip: "Select (V)" },
@@ -53,6 +54,9 @@ export function TopBar() {
           { separator: true, label: "" },
           { label: "Export…", shortcut: "⌘E", onSelect: commands.openExport },
           { label: "Quick export Lottie JSON", onSelect: commands.exportJson },
+          { separator: true, label: "" },
+          { label: "Export all data (.zip)…", onSelect: () => void exportAllData() },
+          { label: "Import backup (.zip)…", onSelect: () => void importBackupFile() },
         ]}
       />
       <RecentMenu />

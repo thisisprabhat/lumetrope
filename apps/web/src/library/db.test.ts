@@ -58,3 +58,17 @@ describe("library", () => {
     expect((await lib.getData("old"))?.project).toBe("{}");
   });
 });
+
+describe("closing", () => {
+  it("lets the database be deleted and reopens on next use", async () => {
+    await lib.put(meta("a"), data("a"));
+    await lib.close?.();
+    const deleted = await new Promise<string>((resolve) => {
+      const r = factory.deleteDatabase("lumetrope");
+      r.onsuccess = () => resolve("deleted");
+      r.onblocked = () => resolve("blocked");
+    });
+    expect(deleted).toBe("deleted");
+    expect(await lib.list()).toEqual([]);
+  });
+});

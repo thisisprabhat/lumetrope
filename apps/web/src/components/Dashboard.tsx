@@ -33,6 +33,8 @@ import { localMcpSupported } from "../platform";
 import { useEditor } from "../store";
 import { Icon } from "./Icon";
 import { McpBadge } from "./McpDialog";
+import { WorkspaceBlock, WorkspaceProblem, WorkspaceSwitch } from "./Workspaces";
+import { importBackupFile } from "../workspaces";
 
 const PRESETS = [
   { name: "Square", w: 512, h: 512 },
@@ -193,6 +195,8 @@ function StartRail({ count }: { count: number }) {
         </div>
       </div>
 
+      <WorkspaceBlock />
+
       <div className="rail-foot">
         {localMcpSupported() && (
           <button className="rail-action" onClick={() => useEditor.setState({ mcpHelpOpen: true })}>
@@ -202,11 +206,11 @@ function StartRail({ count }: { count: number }) {
         )}
         <div className="rail-meta">
           <span>
-            {count} project{count === 1 ? "" : "s"} on this device
+            {count} project{count === 1 ? "" : "s"} in this workspace
           </span>
-          {usage && <span className="num">{formatBytes(usage.used)} used</span>}
+          {usage && <span className="num">{formatBytes(usage.used)} used in this browser</span>}
         </div>
-        <div className="rail-meta faint">Drop a .lottie, .json or .svg anywhere to open it</div>
+        <div className="rail-meta faint">Drop a .lottie, .json or .svg anywhere to open it, or a backup .zip to import it</div>
       </div>
     </aside>
   );
@@ -308,14 +312,22 @@ export function Dashboard() {
   const [sort, setSort] = useState<ProjectSort>("recent");
   const [query, setQuery] = useState("");
   const [dragging, setDragging] = useState(false);
+  const libraryTick = useEditor((s) => s.libraryTick);
+  const wsStatus = useEditor((s) => s.workspace.status);
   const reload = () =>
     void library
       .list()
       .then(setProjects)
       .catch(() => setProjects([]));
-  useEffect(reload, []);
+  useEffect(() => {
+    if (wsStatus === "ready") reload();
+    else setProjects(wsStatus === "loading" ? null : []);
+  }, [libraryTick, wsStatus]);
   // Older projects get thumbnails in the background.
   const backfilled = useRef(false);
+  useEffect(() => {
+    backfilled.current = false;
+  }, [libraryTick]);
   useEffect(() => {
     if (!projects || backfilled.current || !projects.some((p) => !p.thumb)) return;
     backfilled.current = true;
@@ -338,7 +350,8 @@ export function Dashboard() {
         const d = await fromDrop(e);
         if (!d) return;
         if (/\.svg$/i.test(d.file.name)) return void createFromSvg(d.file);
-        if (!/\.(lottie|json)$/i.test(d.file.name)) return useEditor.getState().toast("Drop a .lottie, Lottie .json or .svg file", "error");
+        if (/\.zip$/i.test(d.file.name)) return void importBackupFile(d.file);
+        if (!/\.(lottie|json)$/i.test(d.file.name)) return useEditor.getState().toast("Drop a .lottie, Lottie .json, .svg or backup .zip file", "error");
         await openPicked({ file: d.file, link: d.handle ? { kind: "handle", handle: d.handle } : undefined });
       }}
     >
@@ -350,7 +363,10 @@ export function Dashboard() {
           </svg>
           Lumetrope
         </div>
-        <McpBadge />
+        <div className="row home-top-right">
+          <WorkspaceSwitch />
+          <McpBadge />
+        </div>
       </header>
 
       <div className="home-body">
@@ -388,7 +404,9 @@ export function Dashboard() {
             </label>
           </div>
 
-          {projects === null ? null : shown.length ? (
+          {wsStatus !== "ready" && wsStatus !== "loading" ? (
+            <WorkspaceProblem />
+          ) : projects === null ? null : shown.length ? (
             <div className="pgrid">
               {shown.map((m) => (
                 <ProjectCard key={m.id} m={m} onChanged={reload} />
@@ -408,7 +426,7 @@ export function Dashboard() {
           )}
         </main>
       </div>
-      {dragging && <div className="home-drop">Drop a .lottie, Lottie JSON or SVG file to open it</div>}
+      {dragging && <div className="home-drop">Drop a .lottie, Lottie JSON or SVG file to open it, or a backup .zip to import it</div>}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { useEditor, type LeftTab } from "../store";
 import { Icon } from "../components/Icon";
 import { ColorField, NumberField } from "../ui/controls";
 import { HistoryPanel } from "./HistoryPanel";
+import { ColorSchemes } from "./ColorSchemes";
 import { openContextMenu } from "../contextMenu";
 import { layerMenu } from "../menus";
 
@@ -385,7 +386,9 @@ function ColorsPanel() {
     <>
       <PanelHead title="Colours" />
       <div className="panel-pad">
-        <div className="muted tiny">Every colour in the animation. Change one to recolour it everywhere — fills, strokes, keyframes, solids and text.</div>
+        <ColorSchemes />
+        <div className="subhead">In this animation</div>
+        <div className="muted tiny">Every colour in the animation. Change one to recolour it everywhere — fills, strokes, gradients, keyframes, solids, text and effects.</div>
         <div className="palette">
           {colors.map((c) => (
             <div key={c.hex} className="palette-row">

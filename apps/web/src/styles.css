@@ -3614,3 +3614,330 @@ body.resizing-row * {
     display: none;
   }
 }
+
+/* --------------------------------------------------------- colour schemes */
+
+.schemes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 2px;
+  gap: 2px;
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.segmented button {
+  height: 22px;
+  border-radius: 3px;
+  color: var(--text-2);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.segmented button:hover {
+  color: var(--text-0);
+}
+
+.segmented button.on {
+  background: var(--bg-3);
+  color: var(--lume);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.scheme-swatches {
+  display: flex;
+  height: 16px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: none;
+  width: 84px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.scheme-swatches span {
+  flex: 1;
+}
+
+.scheme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.scheme-row {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.scheme-row:hover {
+  background: var(--bg-3);
+}
+
+.scheme-row.on {
+  background: var(--lume-wash);
+  box-shadow: inset 0 0 0 1px var(--lume-dim);
+}
+
+.scheme-pick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 6px;
+  text-align: left;
+  color: var(--text-1);
+}
+
+.scheme-row.on .scheme-pick,
+.scheme-pick:hover {
+  color: var(--text-0);
+}
+
+.scheme-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scheme-tools {
+  display: flex;
+  padding-right: 2px;
+}
+
+.scheme-active-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.map-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-3);
+  min-height: 20px;
+}
+
+.map-choices {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.map-choice {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.map-choice.on {
+  outline: 1.5px solid var(--lume);
+  outline-offset: 1px;
+}
+
+.outline-looks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+}
+
+.outline-look {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--text-1);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.outline-look:hover {
+  color: var(--text-0);
+  border-color: var(--line-strong);
+}
+
+.outline-look.on {
+  border-color: var(--lume-dim);
+  color: var(--lume);
+  background: var(--lume-wash);
+}
+
+.outline-glyph {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex: none;
+  position: relative;
+}
+
+.outline-glyph::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1.5px solid;
+}
+
+.outline-glyph.light {
+  background: #fff;
+  color: #000;
+}
+
+.outline-glyph.dark {
+  background: #000;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.scheme-editor .scheme-edit-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.scheme-edit-color {
+  display: inline-flex;
+  align-items: center;
+}
+
+.scheme-edit-color .swatch {
+  width: 22px;
+  height: 22px;
+}
+
+/* ------------------------------------------------------------- workspaces */
+
+.home-top-right {
+  gap: 10px;
+}
+
+.ws-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  max-width: 260px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-2);
+  color: var(--text-1);
+}
+
+.ws-switch:hover {
+  color: var(--text-0);
+  border-color: var(--lume-dim);
+}
+
+.ws-switch svg:first-child {
+  color: var(--lume);
+  flex: none;
+}
+
+.ws-switch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.ws-card {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-0);
+}
+
+.ws-card-head {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 2px 6px;
+}
+
+.ws-card-head > svg {
+  color: var(--lume);
+}
+
+.ws-card-text {
+  display: grid;
+  min-width: 0;
+}
+
+.ws-card-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-card-where {
+  font-size: 10.5px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Long paths keep their end (the folder name) visible. */
+.ws-card-where.path {
+  direction: rtl;
+  text-align: left;
+}
+
+.ws-actions {
+  display: grid;
+  gap: 1px;
+}
+
+.ws-actions .rail-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: none;
+}
+
+.ws-actions .rail-row-note {
+  margin-left: auto;
+}
+
+.ws-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.ws-problem-actions {
+  justify-content: center;
+  margin-top: 14px;
+}

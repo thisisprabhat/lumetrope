@@ -5,14 +5,56 @@
 import { act } from "./actions";
 import { engine, projectValue } from "./engine";
 import { exportFileName } from "./lib/export";
-import { createLibrary, type FileLink, type Origin, type ProjectMeta } from "./library/db";
+import type { FileLink, Library, Origin, ProjectMeta } from "./library/db";
 import { linkLabel, pickOpen, pickSave, readLink, saveFormat, writeLink, type Picked } from "./library/files";
 import { saveFile } from "./platform";
 import { useEditor } from "./store";
 import { looksLikeLottie, svgCanvasSize, svgDeclaredSize } from "./library/start";
 import { Engine } from "./wasm/lumetrope_wasm.js";
+import { currentWorkspace, openWorkspace, type WorkspaceInfo } from "./library/workspace";
 
-export const library = createLibrary();
+/** The current workspace's library; null while it opens or when it can't be read. */
+let current: Promise<Library | undefined> = Promise.resolve(undefined);
+
+async function lib(): Promise<Library> {
+  const l = await current;
+  if (!l) throw new Error("This workspace isn't available right now");
+  return l;
+}
+
+/** Projects of the current workspace (follows workspace switches). */
+export const library: Library = {
+  list: async () => (await lib()).list(),
+  getMeta: async (id) => (await lib()).getMeta(id),
+  getData: async (id) => (await lib()).getData(id),
+  put: async (meta, data) => (await lib()).put(meta, data),
+  patch: async (id, changes) => (await lib()).patch(id, changes),
+  remove: async (id) => (await lib()).remove(id),
+  findByLink: async (link) => (await lib()).findByLink(link),
+};
+
+/** Point the library at `w`. `request` may ask for folder access (call from a click). */
+export async function enterWorkspace(w: WorkspaceInfo, request = false): Promise<boolean> {
+  const previous = current;
+  const opening = openWorkspace(w, request).catch(() => ({ lib: undefined, status: "error" as const }));
+  current = opening.then((r) => r.lib);
+  await (await previous)?.close?.();
+  useEditor.setState({ workspace: { info: w, status: "loading" } });
+  const r = await opening;
+  useEditor.setState((s) => ({ workspace: { info: w, status: r.status }, libraryTick: s.libraryTick + 1 }));
+  return r.status === "ready";
+}
+
+void enterWorkspace(currentWorkspace());
+
+/** Close the open project (saving it first) so another workspace or an import can take over. */
+export async function closeProject(): Promise<void> {
+  await saveNow();
+  session++;
+  clearTimeout(timer);
+  stored = false;
+  useEditor.setState({ project: null, view: "home", mode: "animate", fullscreen: false });
+}
 
 const st = () => useEditor.getState();
 
