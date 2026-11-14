@@ -10,6 +10,7 @@ import { HistoryPanel } from "./HistoryPanel";
 import { ColorSchemes } from "./ColorSchemes";
 import { openContextMenu } from "../contextMenu";
 import { layerMenu } from "../menus";
+import { IconifySearch } from "../iconify/IconifySearch";
 
 const TABS: { id: LeftTab; icon: string; tip: string }[] = [
   { id: "layers", icon: "layers", tip: "Layers" },
@@ -227,6 +228,7 @@ function AssetsPanel() {
             <Icon name="text" /> Font
           </button>
         </div>
+        <IconifySearch />
         <div className="subhead">Scenes</div>
         {s.scenes.map((sc) => (
           <button key={sc.id} className="asset-row" onClick={() => setScene(sc.id)}>

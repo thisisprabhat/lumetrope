@@ -29,7 +29,7 @@ describe("lumetrope-mcp over stdio", () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     expect(names.length).toBeGreaterThan(100);
-    for (const n of ["read_scene", "create_shape", "set_keyframe", "add_state_machine", "get_frame_image", "save_version", "preview_state_machine"]) expect(names).toContain(n);
+    for (const n of ["read_scene", "create_shape", "set_keyframe", "add_state_machine", "get_frame_image", "save_version", "preview_state_machine", "iconify_search", "iconify_import"]) expect(names).toContain(n);
     expect(tools.every((t) => t.inputSchema.type === "object")).toBe(true);
   });
 
@@ -49,6 +49,11 @@ describe("lumetrope-mcp over stdio", () => {
     const r = await client.callTool({ name: "read_scene", arguments: {} });
     expect(r.isError).toBeFalsy();
     expect(JSON.stringify(r.content)).toContain("read_scene");
+    for (const name of ["iconify_search", "iconify_import"]) {
+      const result = await client.callTool({ name, arguments: name === "iconify_search" ? { query: "rocket" } : { icon: "lucide:rocket" } });
+      expect(result.isError).toBeFalsy();
+      expect(JSON.stringify(result.content)).toContain(name);
+    }
     const img = await client.callTool({ name: "get_frame_image", arguments: { frame: 3 } });
     expect((img.content as any[])[0].type).toBe("image");
   });

@@ -6,6 +6,7 @@ import { CanvasRenderer } from "../gpu/CanvasRenderer";
 import { commitNow } from "../panels/HistoryPanel";
 import { useEditor, type SmSnapshot } from "../store";
 import { createProject } from "../persist";
+import { iconifyImport, iconifySearch } from "../iconify/tools";
 
 const st = () => useEditor.getState();
 
@@ -116,6 +117,14 @@ export async function runTool(tool: string, args: Record<string, any>): Promise<
     case "stop_state_machine_preview":
       st().setMode("animate");
       return { ok: true };
+    case "iconify_search":
+      return iconifySearch(args);
+    case "iconify_import": {
+      const r = await iconifyImport({ ...args, scene: args.scene ?? st().scene }, (a) => call("import_svg", a));
+      st().refresh();
+      if (r?.id) st().select([r.id]);
+      return r;
+    }
     default: {
       const r = call(tool, args);
       st().refresh();

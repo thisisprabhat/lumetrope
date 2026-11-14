@@ -1128,6 +1128,46 @@ textarea {
   max-height: 100%;
 }
 
+.iconify-search {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iconify-tile {
+  position: relative;
+  cursor: grab;
+  padding: 6px;
+}
+
+.iconify-tile:hover {
+  border-color: var(--lume-dim);
+}
+
+.iconify-tile > img.iconify-monochrome {
+  filter: brightness(0) invert(1);
+}
+
+.iconify-tile .iconify-copy {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 1;
+  opacity: 0;
+  background: var(--bg-1);
+}
+
+.iconify-tile:hover .iconify-copy,
+.iconify-copy:focus {
+  opacity: 1;
+}
+
+.iconify-status {
+  color: var(--text-2);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
 .palette {
   display: flex;
   flex-direction: column;

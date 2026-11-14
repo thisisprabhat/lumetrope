@@ -8,6 +8,9 @@ import { CanvasRenderer } from "../gpu/CanvasRenderer";
 import { openContextMenu } from "../contextMenu";
 import { canvasMenu } from "../menus";
 import { importFile } from "../panels/LeftSidebar";
+import { act } from "../actions";
+import { decideDrop, ICON_MIME } from "../iconify/drop";
+import { iconifyMessage, svgImportArgs } from "../iconify/place";
 
 /**
  * Canvas stage. One viewport-sized canvas is rendered through the camera, so
@@ -216,8 +219,27 @@ export function Stage({ overlay }: { overlay?: (zoom: number) => React.ReactNode
       onDrop={async (e) => {
         e.preventDefault();
         setDragging(false);
-        const f = e.dataTransfer.files[0];
-        if (!f) return;
+        const rect = viewRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 };
+        const decision = decideDrop({
+          file: e.dataTransfer.files[0] ?? null,
+          iconRaw: e.dataTransfer.getData(ICON_MIME),
+          clientX: e.clientX,
+          clientY: e.clientY,
+          rect,
+          camera: useEditor.getState().camera,
+        });
+        if (decision.kind === "icon") {
+          try {
+            const st = useEditor.getState();
+            const r = act<{ id: string }>("import_svg", svgImportArgs({ svg: decision.svg, name: decision.name, scene: st.scene, position: decision.position, canvas: st.info }));
+            if (r) st.select([r.id]);
+          } catch (err) {
+            useEditor.getState().toast(iconifyMessage(err, "Could not add icon"), "error");
+          }
+          return;
+        }
+        if (decision.kind !== "file") return;
+        const f = decision.file;
         if (!/\.(lottie|json)$/i.test(f.name)) return void importFile(f);
         const item = [...e.dataTransfer.items].find((i) => i.kind === "file") as any;
         const handle = item?.getAsFileSystemHandle ? await item.getAsFileSystemHandle().catch(() => null) : null;

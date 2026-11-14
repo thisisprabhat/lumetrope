@@ -50,4 +50,34 @@ export const HOST_TOOLS = [
     inputSchema: { type: "object", properties: { seconds: { type: "number", exclusiveMinimum: 0, maximum: 60 } }, required: ["seconds"], additionalProperties: false },
   },
   { name: "stop_state_machine_preview", description: "Stop the running state machine preview.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+  {
+    name: "iconify_search",
+    description: "Search the public Iconify catalogue (api.iconify.design) for icons. Returns prefix:name ids. Use iconify_import to place one into the open animation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search words, such as 'house' or 'arrow right'" },
+        limit: { type: "number", description: "Page size, 1–64 (default 32)" },
+        prefix: { type: "string", description: "Optional icon set, such as 'lucide' or 'mdi'" },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "iconify_import",
+    description: "Download one Iconify icon (prefix:name) as SVG and import it as an editable shape layer. The icon is embedded in the file. Optional color is a hex fill (default black). Optional position is [x, y] in the scene.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        icon: { type: "string", description: "Icon id, such as 'lucide:house'" },
+        color: { type: "string", description: "Hex fill baked into the SVG, default #000000" },
+        name: { type: "string", description: "Layer name (default: the icon id)" },
+        position: { type: "array", items: { type: "number" }, minItems: 2, maxItems: 2, description: "Scene position [x, y]. Omit to centre the icon." },
+        scene: { type: "string", description: "Scene id (default: the scene being edited)" },
+      },
+      required: ["icon"],
+      additionalProperties: false,
+    },
+  },
 ] as const;

@@ -127,6 +127,12 @@ installs its own copy of the server, so no repository checkout is needed. Then t
 `ws://127.0.0.1:47321` (override with `LUMETROPE_MCP_PORT`) and only accepts local Lumetrope
 windows.
 
+Agents can use `iconify_search` (for example, `{ "query": "rocket", "prefix": "lucide" }`),
+then `iconify_import` with an icon id, optional hex color, and canvas position.
+The import returns a layer id for `set_keyframe` or `apply_motion_preset`.
+SVG paths are embedded in the animation; no Iconify API key is needed.
+These tools are also registered with browser WebMCP.
+
 ## Tests
 
 ```bash

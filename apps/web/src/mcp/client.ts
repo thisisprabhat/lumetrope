@@ -5,6 +5,7 @@ import { useEditor } from "../store";
 import { runTool } from "./host";
 import { backoffMs, parseRequest, response } from "./protocol";
 import { localMcpSupported } from "../platform";
+import { HOST_TOOLS } from "../../../../packages/mcp/src/hostTools";
 
 export const MCP_PORT = 47321;
 let ws: WebSocket | null = null;
@@ -94,7 +95,8 @@ export function initMcp() {
 function registerWebMcp() {
   const mc = (navigator as any).modelContext;
   if (!mc) return;
-  const tools = (JSON.parse(engine().catalog()) as { name: string; description: string; inputSchema: object }[]).map((t) => ({
+  const catalog = JSON.parse(engine().catalog()) as { name: string; description: string; inputSchema: object }[];
+  const tools = [...catalog, ...HOST_TOOLS].map((t) => ({
     name: t.name,
     description: t.description,
     inputSchema: t.inputSchema,

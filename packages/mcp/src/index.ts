@@ -29,6 +29,7 @@ const server = new Server(
     instructions:
       "Lumetrope is a Lottie/dotLottie animation editor. Start with read_scene to get layer ids (e.g. 'root:3'), then edit with the tools. " +
       "Frames are integers on the scene timeline. After visual changes call get_frame_image to look at the result. " +
+      "Use iconify_search to find open source icons and iconify_import to embed them as editable shape layers; animate the returned layer ids with set_keyframe or apply_motion_preset. " +
       "Interactivity is built with state machines (add_state_machine, add_state, add_input, add_transition, add_interaction) over named segments (add_segment); " +
       "test them with preview_state_machine + state_machine_pointer/state_machine_input. Save milestones with save_version.",
   },
